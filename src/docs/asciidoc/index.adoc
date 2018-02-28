@@ -1,0 +1,14 @@
+= Index Placeholder
+
+link:tuto1.html[First tutorial]
+
+image:index/sunset.jpg[alt]
+
+
+[[purpose]]
+.Placeholder
+****
+++++
+<a href="/tuto1">First tutorial<a/>
+++++
+****
