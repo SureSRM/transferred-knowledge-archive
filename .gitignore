@@ -1,0 +1,3 @@
+# Output directory for HTML files
+.gradle
+build/
