@@ -1,0 +1,7 @@
+= Tuto1 Placeholder
+
+[[purpose]]
+.Placeholder
+****
+Content
+****
