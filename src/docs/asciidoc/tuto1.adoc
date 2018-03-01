@@ -1,7 +1,0 @@
-= Tuto1 Placeholder
-
-[[purpose]]
-.Placeholder title
-****
-Content
-****
