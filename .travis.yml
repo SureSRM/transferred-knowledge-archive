@@ -8,10 +8,17 @@ services:
 script:
   - gradle asciidoctor
 
+before_script:
+
+
 after_success:
   - cd build/asciidoc/html5
   - git init
   - git config user.name "${GH_USER_NAME}"
-  - git config user.email "{GH_USER_EMAIL}"
+  - git config user.email "${GH_USER_EMAIL}"
+  - git remote add origin https://github.com/SureSRM/transferred-knowledge-archive.git
+  - git fetch origin gh-pages
   - git add . ; git commit -m "Deploy to GitHub Pages"
-  - git push --force "https://${GH_TOKEN}@${GH_REF}" master:gh-pages
+  - git checkout gh-pages
+  - git merge -X theirs --squash master ; git commit -m "Deploy to GitHub Pages"
+  - git push "https://${GH_TOKEN}@${GH_REF}" gh-pages:gh-pages
