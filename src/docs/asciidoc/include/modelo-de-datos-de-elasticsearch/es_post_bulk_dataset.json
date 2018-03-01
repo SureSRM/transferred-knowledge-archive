@@ -1,0 +1,7 @@
+POST /geo/dataset/_bulk
+{ "index": { "_id": "spain", "_routing": "ign", "parent":"ign"  }}
+{ "name": "Spain dataset", "url": "httpxxxx" }
+{ "index": { "_id": "france", "_routing": "ue", "parent":"ue"  }}
+{ "name": "France dataset", "url": "httpxxxx" }
+{ "index": { "_id": "uk", "_routing": "ue" , "parent":"ue"  }}
+{ "name": "UK dataset", "url": "httpxxxx" }

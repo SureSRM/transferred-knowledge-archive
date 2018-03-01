@@ -1,0 +1,384 @@
+// Configuración de rutas
+:project_id: modelo-de-datos-de-elasticsearch
+:resources_dir: {resourcesdir}/{project_id}
+:include_dir: {includedir}/{project_id}
+
+// Variables del documento
+:es: Elasticsearch
+:esv: Elasticsearch v2.4
+:kb: Kibana
+:kbv: Kibana v2.4
+:dok: Docker
+:dokv: Docker 17.12.0-ce
+:dokpose: Docker Compose
+:dokposev: Docker Compose1.19.0
+:dokposef: docker-compose.yml
+:port: Portainer
+
+= Modelo de datos de Geolake
+Sergio Martín Segura <segura@unizar.es>
+v1.0, {docdate}
+:experimental:
+La forma más sencilla de familiarizarse con {es} es trabajando con sus
+imágenes para contenedores de {dok} alojadas en
+http://docker.elastic.co[su propio repositorio].
+
+Configuraremos su lanzamiento orquestado bajo {dokpose} de modo que podremos,
+con un sólo fichero, definir un script de arranque sencillo que contenga
+todo lo necesario.
+
+== Pre-requisitos
+* {dokv}
+* {dokposev}
+
+== Instalación de los contenedores
+
+Un fichero {dokpose} define los atributos y propiedades de los contenedores
+que forman un sistema en {dok}. Entre ellos están:
+
+* Las imágenes que utilizan
+* Las redes que los conectan
+* Los volúmenes de persistencia de datos
+* Las variables de entorno de cada contenedor
+
+=== Fichero de configuración `docker-compose.yml`
+En el fichero de configuración se definen los dos contenedores que
+usaremos. Uno para {es} y otro para {kb}.
+
+.docker-compose.yml - {es}
+[source, yaml,subs="verbatim"]
+----
+include::{resources_dir}/docker-compose.yml[tag=elasticsearch]
+----
+<1> La dirección desde la cual se va a importar la imagen. En este caso se utiliza el
+propio repositorio de docker, pero para versiones superiores a la `5.2.1`, se recomienda usar
+el oficial de `elastic.co`
+<2> El nombre que el contenedor tomará dentro del sistema de {dok}
+<3> Las variables de entono que definen: el nombre del cluster, los puertos por defecto
+y desactivan la capa de seguridad de `xpack`
+<4> La red a la que el contenedor está conectado. (Ésta es definida al final de fichero)
+<5> El `binding` entre el puerto interno del conetendor y el puerto de la
+máquina `host` en el cual estará disponible. Su sintaxis es `host-port:container-port`
+
+.docker-compose.yml - {kb}
+[source, yaml]
+----
+include::{resources_dir}/docker-compose.yml[tag=kibana]
+----
+[start=6]
+<1> Establece una relación de dependencia de modo que no se inicie el montaje
+hasta que no se haya terminado de montar el contenedor de {es}
+
+== Lanzamiento del sistema
+
+Teniendo el fichero `docker-compose.yml` en la raíz del proyecto, lanzamos:
+[source, bash]
+----
+$ docker compose up -d <1>
+----
+<1> El atributo `-d` hará que los contenedores se lancen en segundo plano sin tener
+su consola `attached` a la consola en la que se lanza el script. No obstante, puede
+ser interesante quitar este atributo si se desea que el ciclo de vida de los contenedores
+esté vinculado a la consola, de modo que el comando `Ctrl+C` cierre detenga los contenedores.
+
+//Cantidad de contenedores en docker-compose.yml
+:dockcount: 3
+Esto lanzará {dockcount} contenedores:
+
+{es}:: Sistema de recuperación de información distribuído y de baja latencia
+{kb}:: Interfaz web que permite consultar los datos en {es} y realizar gráficos es informes
+*{port}:: Interfaz web gestora de contenedores {dok}. Útil si se quiere monitorear el
+entorno de pruebas o consultar las respectivas consolas.
+_*Este contenedor no es necesairo si no se desea profundizar en el funcionamiento del sistema_
+
+Los contenedores están configurados en `docker-compose.yml` para exponer los puertos:
+
+http://localhost:9200[{es} :9200]:: Puerto de consulta de {es}. Puede ser consultado vía navegador
+y los resultados serán mostrados en JSON
+http://localhost:5601[{kb} :5601]:: Puerto de la interfaz web de Kibana.
+http://localhost:9000[{port} :9000]:: Puerto de la interfaz web de {port}.
+
+== Implementación del modelo de datos (simplificado)
+
+=== Preparación del índice
+
+La jerarquía en la que {es} indexa sus documentos es
+`índice > tipo_de_documento > documento`. Para cada tipo de documento se establece
+un _patrón_ o _estructura_ que denomina `mapping`. En él define la estructura común
+de los documentos de ese tipo, lo que le permite preparar los datos para su búsqueda.
+
+Existen dos formas de definir el `mapping` de un tipo de documento.
+
+Automática::
+Todo índice se incializa con un `mapping` vacío.
+Cuando un dato es indexado en un `indice > tipo_de_documento`, {es} comprueba si
+los atributos de ese dato ya estaban en el `mapping` previo de ese `tipo_de_documento`.
+Si no los encuentra, los añade al existente infiriendo además el tipo de dato de cada atributo.
+
+Éste método tiene varias desventajas:
+
+* El tipo de dato es inferido automáticamente, por lo que puede no corresponder
+con el tipo de dato deseado
+* Todo atributo no recogido en el `mapping` es _mapeado_ automáticamente,
+sea interesante o no
+* No se pueden establecer políticas de análisis como `not_analyzed` a los atributos
+* No se pueden establecer propiedades complejas como diversos `fields` o
+relaciones `parent-child`.
+
+Por ello {es} ofrece una forma más robusta de definir previamente los `mapping` de un índice
+para cada tipo de dato.
+
+Manual::
+Mediante la API de `mapping`, podemos definir las propiedades esenciales de nuestro modelo
+y dejar a {es} que complete el resto o definir el modelo entero sin dejar opción al _autogenerado_.
+
+Para crear dichos `mapping` manuales debemos enviar un mensaje a la API HTTP de {es}:
+
+.Mapping del modelo de datos
+[source, json]
+----
+include::{include_dir}/es_put_mapping.json[]
+----
+++++
+<button type="button" class="fetch_button" data-method="PUT"
+  data-site="http://localhost:9200/geo" data-body='
+  {
+    "mappings": {
+      "organization": {},
+      "dataset": {
+        "_parent": {
+          "type": "organization"
+        }
+      },
+      "feature": {
+        "_parent": {
+          "type": "dataset"
+        }
+      }
+    }
+  }
+  '>
+  Ejecutar en Elasticsearch
+</button >
+<a type="button" target="_blank" href='http://localhost:9200/geo/_mapping?'>
+  Ver resultados
+</a>
+++++
+
+=== Inserción de los datos
+
+{es} ofrece dos formas de insertar datos en sus índices, independientementente
+de si se hace a través de la API REST o a través de la API Nativa en Java:
+
+Inserción individual:: Mediante una petición POST al `endopoint` REST del recurso: +
+  `/geo/dataset/{id_del recurso}`
+Inserción en lote:: Mediante una petición POST al `endpoint` de la API `_bulk`
+del tipo de dato que se va a insertar: +
+  `/geo/dataset/_bulk`
+
+Esta segunda opción es la que elegiremos para este ejemplo ya que incrementa
+drásticamente la velocidad de inexado y reduce el número de periciones.
+Además resulta más didáctico ver todos los datos de un mismo tipo juntos.
+
+La API `_bulk` define que para cada operación consta de una línea que define el
+comando y una segunda línea opcional, según el tipo de comando, que provee datos extra:
+
+[source, bash]
+----
+action_and_meta_data\n
+optional_source\n
+action_and_meta_data\n
+optional_source\n
+----
+
+Siguiendo las reglas de dicha API, definimos tres peticiones que inserten los datos
+para los tres tipos existentes: `organization`, `dataset`, `feature`
+
+Insertamos tres `organization`: `ign`, `ue`, `gov`
+
+.Inserción de las organizaciones
+[source, json]
+----
+include::{include_dir}/es_post_bulk_organization.json[]
+----
+++++
+<button type="button" class="fetch_button" data-method="POST"
+  data-site="http://localhost:9200/geo/organization/_bulk" data-body='
+  { "index": { "_id": "ign" }}
+  { "name": "Instituto geografico nacional", "url": "httpxxxx" }
+  { "index": { "_id": "ue" }}
+  { "name": "Union Europea", "url": "httpxxxx" }
+  { "index": { "_id": "gov" }}
+  { "name": "USA Covernment", "url": "httpxxxx" }
+  '>
+  Ejecutar en Elasticsearch
+</button >
+<a type="button" target="_blank" href='http://localhost:9200/geo/feature/_search?'>
+  Ver resultados
+</a>
+++++
+
+Insertamos tres `dataset` pertenecientes a sus respectivas `organization`: +
+ `ign -> spain` +
+ `ue -> france, uk`
+
+.Inserción de los datasets
+[source, json]
+----
+include::{include_dir}/es_post_bulk_dataset.json[]
+----
+++++
+<button type="button" class="fetch_button" data-method="POST"
+  data-site="http://localhost:9200/geo/dataset/_bulk" data-body='
+  { "index": { "_id": "spain", "_routing": "ign", "parent":"ign"  }}
+  { "name": "Spain dataset", "url": "httpxxxx" }
+  { "index": { "_id": "france", "_routing": "ue", "parent":"ue"  }}
+  { "name": "France dataset", "url": "httpxxxx" }
+  { "index": { "_id": "uk", "_routing": "ue" , "parent":"ue"  }}
+  { "name": "UK dataset", "url": "httpxxxx" }
+  '>
+  Ejecutar en Elasticsearch
+</button >
+<a type="button" target="_blank" href='http://localhost:9200/geo/dataset/_search?'>
+  Ver resultados
+</a>
+++++
+
+Insertamos nueve `feature` pertenecientes a sus respectivas `dataset` pertenecientes
+a sus respectivas `organization`: +
+ `ign -> spain -> spain_01,spain_02, spain_03, spain_04` +
+ `ue -> france -> france_01, france_02, france_03` +
+ `ue -> uk -> uk_01, uk_02`
+
+Cabe destacar que a las feature se les ha dotado de un autributo `beauty: text`
+que permitirá posteriormente simular un filtrado por faceta
+
+.Inserción de las features
+[source, json]
+----
+include::{include_dir}/es_post_bulk_feature.json[]
+----
+++++
+<button type="button" class="fetch_button" data-method="POST"
+  data-site="http://localhost:9200/geo/feature/_bulk" data-body='
+  { "index": { "_id": "spain_01", "_routing": "ign" ,"parent":"spain" }}
+  { "name": "Huerva" }
+  { "index": { "_id": "spain_02", "_routing": "ign" ,"parent":"spain" }}
+  { "name": "Huesca", "beauty": "yes" }
+  { "index": { "_id": "spain_03", "_routing": "ign" ,"parent":"spain" }}
+  { "name": "Zaragoza", "beauty": "yes" }
+  { "index": { "_id": "spain_04", "_routing": "ign" ,"parent":"spain" }}
+  { "name": "Teruel" }
+
+  { "index": { "_id": "france_01", "_routing": "ue" ,"parent":"france" }}
+  { "name": "Paris", "beauty": "yes" }
+  { "index": { "_id": "france_02", "_routing": "ue" ,"parent":"france" }}
+  { "name": "Lion", "beauty": "yes" }
+  { "index": { "_id": "france_03", "_routing": "ue" ,"parent":"france" }}
+  { "name": "Morlas", "beauty": "yes" }
+
+  { "index": { "_id": "uk_01", "_routing": "ue" ,"parent":"uk" }}
+  { "name": "London", "beauty": "yes" }
+  { "index": { "_id": "uk_02", "_routing": "ue" ,"parent":"uk" }}
+  { "name": "Bristol" }
+  '>
+  Ejecutar en Elasticsearch
+</button >
+<a type="button" target="_blank" href='http://localhost:9200/geo/feature/_search?'>
+  Ver resultados
+</a>
+++++
+
+=== Consulta de los datos
+
+Una vez insertados los datos, siguiendo nuestro modelo, podemos realizar consultas
+basadas en su relación de parentesco. De ese modo, obtenemos la consulta que realmente
+deseábamos los `dataset`.
+
+No buscamos las `feature` en crudo sino que solicitamos la lista que `dataset`
+que contienen alguna `feature` que cumpla la query, en este caso, tener el valor
+`yes` para la faceta `beauty`.
+
+.Consulta a {es} sobre los datos
+[source, json]
+----
+include::{include_dir}/es_get_query.json[]
+----
+++++
+<a type="button" target="_blank" href='http://localhost:9200/geo/dataset/_search?
+  {
+  	"query": {
+  		"has_child": {
+  			"type": "feature",
+  			"score_mode": "sum",
+  			"query": {
+  				"term" : {
+  					"beauty" : "yes"
+  				}
+  			}
+  		}
+  	}
+  }
+  '>
+  Ver resultados
+</a >
+++++
+
+=== Relaciones Parent-Child
+
+El éxito de esta búsqueda se debe a que hemos aprobechado las relaciones
+parentales de {es}. De ese modo, podemos realizar agregaciones de los hijos por
+sus padres y devolver a los propios padres, en lugar de los `id` que obtendríamos
+si sólo hiciéramos una agregación.
+
+=== El Routing
+
+Como ya se ha mencionado, {es} es un sistema de recuperación de información distribuído.
+Una de las claves de su capacidad de crecimiento horizontal es la aplicación de la
+técnica del `sharding`. Mediante dicha técnica, se establecen políticas de
+separación de modo que los documentos puedan ser repartidos entre los distintos nodos
+manteniendo criterios de eficiencia.
+
+{es} exige que para las relaciones `parent-child` como las que que tenemos en
+nuestro `mapping`, tanto el padre como los hijos deben estar en el mismo shard.
+Ésta no es una imposición costosa de aplicar ya que la naturaleza de los datos
+tiene una fuerte componente _local_.
+
+La manera de especificar esto es definiendo el atributo `_routing` y asegurandose de
+que se el mismo tanto para la organización, como para sus datasets y los datos
+de dichos datasets.
+
+*Esto además permite poder optimizar algunas queries si concemos los routing en los que buscamos
+los resultados*. Por ejemplo, en el momento en el que se aplique un facetado por `organization`,
+podremos acotar la(s) `_routing` de búsqueda a las de esa `organization` ahorrando
+explorar `shard` en los que sabemos que no habrá resultados.
+
+++++
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+console.log("Script reached");
+
+$(document).ready(function () {
+
+  $( ".fetch_button" ).click(function(event) {
+    var url = event.target.dataset.site;
+    var body = event.target.dataset.body;
+    var method = event.target.dataset.method;
+    //
+    // var headers = new Headers()
+    // headers.append("Origin", "http://localhost")
+
+    var init = { method: method,
+                  headers: {Origin: "http://localhost"},
+                  mode: 'cors' ,
+                  body: body};
+
+    fetch(url, init).then(function(response){
+      event.target.append(" - Result code: " + response.status);
+    });
+  });
+
+
+});
+</script>
+++++

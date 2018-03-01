@@ -1,0 +1,14 @@
+POST /geo/dataset/_search
+{
+	"query": {
+		"has_child": {
+			"type": "feature",
+			"score_mode": "sum",
+			"query": {
+				"term" : {
+					"beauty" : "yes"
+				}
+			}
+		}
+	}
+}
