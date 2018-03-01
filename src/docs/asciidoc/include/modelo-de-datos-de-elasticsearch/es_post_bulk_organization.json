@@ -1,0 +1,7 @@
+POST /geo/organization/_bulk
+{ "index": { "_id": "ign" }}
+{ "name": "Instituto geografico nacional", "url": "httpxxxx" }
+{ "index": { "_id": "ue" }}
+{ "name": "Union Europea", "url": "httpxxxx" }
+{ "index": { "_id": "gov" }}
+{ "name": "USA Covernment", "url": "httpxxxx" }

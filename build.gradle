@@ -15,13 +15,17 @@ asciidoctor {
     attributes \
         'build-gradle': file('build.gradle'),
         'sourcedir': project.sourceSets.main.java.srcDirs[0],
+        'imagesdir': 'images',
+        'resourcesdir': "${projectDir}/src/main/resources",
+        'includedir': "${projectDir}/src/docs/asciidoc/include",
         'endpoint-url': 'http://example.org',
         'source-highlighter': 'coderay',
-        'imagesdir': 'images',
         'toc': 'left',
+        'toc-title': 'Tabla de contenidos',
         'icons': 'font',
         'setanchors': '',
         'idprefix': '',
         'idseparator': '-',
-        'docinfo1': ''
+        'docinfo1': '',
+        'tabsize': '4'
 }

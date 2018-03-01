@@ -1,0 +1,57 @@
+version: "2"
+
+services:
+  # tag::elasticsearch[]
+  elasticsearch:
+    image: elasticsearch:2.4 #<1>
+    container_name: elasticsearch #<2>
+    volumes:
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    environment: #<3>
+      cluster.name: "elastic"
+      http.host: 0.0.0.0
+      transport.host: 127.0.0.1
+      xpack.security.enabled: "false"
+      xpack.monitoring.enabled: "false"
+      xpack.graph.enabled: "false"
+      xpack.watcher.enabled: "false"
+    networks: #<4>
+     - es-cluster
+    ports: #<5>
+     - 9200:9200
+     - 9300:9300
+  # end::elasticsearch[]
+
+  # tag::kibana[]
+  kibana:
+    image: kibana:4.6
+    container_name: kibana
+    environment:
+      cluster.name: "elastic"
+      xpack.security.enabled: "false"
+      xpack.monitoring.enabled: "false"
+      xpack.graph.enabled: "false"
+      xpack.reporting.enabled: "false"
+    depends_on: #<1>
+      - elasticsearch
+    networks:
+      - es-cluster
+    ports:
+      - 5601:5601
+  # end::kibana[]
+
+  # tag::portainer[]
+  portainer:
+    image: portainer/portainer:1.16.2
+    container_name: portainer
+    command: --no-auth
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - es-cluster
+    ports:
+      - 9000:9000
+  # end::portainer[]
+
+networks:
+  es-cluster:
