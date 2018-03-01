@@ -1,7 +1,7 @@
 = Tuto1 Placeholder
 
 [[purpose]]
-.Placeholder
+.Placeholder title
 ****
 Content
 ****

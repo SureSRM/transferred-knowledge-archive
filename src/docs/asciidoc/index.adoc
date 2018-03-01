@@ -4,9 +4,8 @@ link:tuto1.html[First tutorial]
 
 image:index/sunset.jpg[alt]
 
-
 [[purpose]]
-.Placeholder
+.Placeholder title
 ****
 ++++
 <a href="/tuto1">First tutorial<a/>
