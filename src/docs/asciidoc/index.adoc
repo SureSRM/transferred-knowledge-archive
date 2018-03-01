@@ -1,13 +1,3 @@
-= Index Placeholder
+= Índice de contenidos
 
-link:tuto1.html[First tutorial]
-
-image:index/sunset.jpg[alt]
-
-[[purpose]]
-.Placeholder title
-****
-++++
-<a href="/tuto1">First tutorial<a/>
-++++
-****
+link:modelo-de-datos-de-elasticsearch.html[Modelo de datos de Elasticsearch]

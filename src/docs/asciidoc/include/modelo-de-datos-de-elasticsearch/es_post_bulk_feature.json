@@ -1,0 +1,21 @@
+POST /geo/feature/_bulk
+{ "index": { "_id": "spain_01", "_routing": "ign" ,"parent":"spain" }}
+{ "name": "Huerva" }
+{ "index": { "_id": "spain_02", "_routing": "ign" ,"parent":"spain" }}
+{ "name": "Huesca", "beauty": "yes" }
+{ "index": { "_id": "spain_03", "_routing": "ign" ,"parent":"spain" }}
+{ "name": "Zaragoza", "beauty": "yes" }
+{ "index": { "_id": "spain_04", "_routing": "ign" ,"parent":"spain" }}
+{ "name": "Teruel" }
+
+{ "index": { "_id": "france_01", "_routing": "ue" ,"parent":"france" }}
+{ "name": "Paris", "beauty": "yes" }
+{ "index": { "_id": "france_02", "_routing": "ue" ,"parent":"france" }}
+{ "name": "Lion", "beauty": "yes" }
+{ "index": { "_id": "france_03", "_routing": "ue" ,"parent":"france" }}
+{ "name": "Morlas", "beauty": "yes" }
+
+{ "index": { "_id": "uk_01", "_routing": "ue" ,"parent":"uk" }}
+{ "name": "London", "beauty": "yes" }
+{ "index": { "_id": "uk_02", "_routing": "ue" ,"parent":"uk" }}
+{ "name": "Bristol" }

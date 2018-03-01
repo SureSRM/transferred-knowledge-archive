@@ -1,0 +1,16 @@
+PUT /geo
+{
+  "mappings": {
+    "organization": {},
+    "dataset": {
+      "_parent": {
+        "type": "organization"
+      }
+    },
+    "feature": {
+      "_parent": {
+        "type": "dataset"
+      }
+    }
+  }
+}
