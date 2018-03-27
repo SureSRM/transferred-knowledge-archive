@@ -2,21 +2,21 @@ version: '2'
 
 services:
 
-    rancher:
-        image: rancher/server:v1.6.15
-        container_name: rancher
-        restart: unless-stopped
+    rancher: 
+        image: rancher/server:v1.6.15 # <1>
+        container_name: rancher # <2>
+        restart: unless-stopped # <3>
         networks:
-            - server-local
+            - server-local # <4>
         ports:
-            - 8080:8080
+            - 8080:8080 # <5>
     
     portainer:
         image: portainer/portainer
         container_name: portainer
         restart: always
         volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
+            - /var/run/docker.sock:/var/run/docker.sock # <6>
         networks:
             - server-local
         ports:
@@ -28,7 +28,7 @@ services:
         privileged: true
         restart: always
         volumes:
-            - ./daemon.json:/etc/docker/daemon.json
+            - ./daemon.json:/etc/docker/daemon.json # <7>
         networks:
             - server-local
         ports:
@@ -36,4 +36,4 @@ services:
 
 networks:
     server-local:
-        driver: bridge
+        driver: bridge # <8>
