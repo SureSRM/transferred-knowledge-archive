@@ -1,0 +1,33 @@
+// Configuración de rutas
+:project_id: react-text-box
+:resources_dir: {resourcesdir}/{project_id}
+:include_dir: {includedir}/{project_id}
+
+// Variables del documento
+:rk: React JS
+
+= React.js: Text Box
+Sergio Martín Segura <segura@unizar.es>
+v1.0, {docdate}
+:experimental:
+    {rk} es un _framework_ para la realización de aplicaciones _frontend_ .
+
+== Pre-requisitos
+* {dokv}
+* {dokposev}
+
+
+.docker-compose.yml - {es}
+[source, yaml,subs="verbatim"]
+----
+include::{resources_dir}/docker-compose.yml[tag=elasticsearch]
+----
+<1> La dirección desde la cual se va a importar la imagen. En este caso se utiliza el
+propio repositorio de docker, pero para versiones superiores a la `5.2.1`, se recomienda usar
+el oficial de `elastic.co`
+<2> El nombre que el contenedor tomará dentro del sistema de {dok}
+<3> Las variables de entono que definen: el nombre del cluster, los puertos por defecto
+y desactivan la capa de seguridad de `xpack`
+<4> La red a la que el contenedor está conectado. (Ésta es definida al final de fichero)
+<5> El `binding` entre el puerto interno del conetendor y el puerto de la
+máquina `host` en el cual estará disponible. Su sintaxis es `host-port:container-port`
