@@ -1,33 +1,102 @@
 // Configuración de rutas
-:project_id: react-text-box
+:project_id: rancher-and-docker-in-docker
 :resources_dir: {resourcesdir}/{project_id}
 :include_dir: {includedir}/{project_id}
 
 // Variables del documento
-:rk: React JS
+:dok: Docker
+:dokv: {dok} 17.12.0-ce
+:dokpose: {dok} Compose
+:dokposev: {dokpose} 1.19.0
+:dokposef: docker-compose.yml
+:dokreg: {dok} Registry
+:port: Portainer 
+:dind: {dok}In{dok}
+:ran: Rancher
+:rans: {ran} Server
+:ranag: {ran} Agent
 
-= React.js: Text Box
+= {ran} y {dind}
 Sergio Martín Segura <segura@unizar.es>
 v1.0, {docdate}
 :experimental:
-    {rk} es un _framework_ para la realización de aplicaciones _frontend_ .
+Rancher es un gestor gestores de contenedores distribuídos. Permite orquestar depliegues en máquinas remotas, replicar nodos y servicios y crear arquitecturas de red de forma rápida y sencilla.
 
 == Pre-requisitos
 * {dokv}
 * {dokposev}
 
+== Introducción
+En este proyecto se abordará la creación de un entorno de pruebas en el que experimentar con las funcionalidades de {ran} sin necesidad de desplegar servidores remotos o instalar gestores de máquinas virtuales.
 
-.docker-compose.yml - {es}
+Para ello se hará uso de la técnica {dind} que permite desplegar un contenedor docker con otro docker en su interior, de modo que, a efectos prácticos, figure como un nodo independiente en la misma red.
+
+Si bien es cierto que desde {dok} desaconsejan el uso de esta técnica en entornos de producción, resulta ideal para hacer un _bootstrapring_ rápido del concepto y verlo en acción.
+
+== Configuración del entorno
+La configuración del entorno se hace enormemente sencilla gracias a {dokpose}. La única configuración externa a tener en cuenta es el fichero
+
+.docker-compose.yml
 [source, yaml,subs="verbatim"]
 ----
-include::{resources_dir}/docker-compose.yml[tag=elasticsearch]
+include::{resources_dir}/docker-compose.yml[]
 ----
-<1> La dirección desde la cual se va a importar la imagen. En este caso se utiliza el
-propio repositorio de docker, pero para versiones superiores a la `5.2.1`, se recomienda usar
-el oficial de `elastic.co`
-<2> El nombre que el contenedor tomará dentro del sistema de {dok}
-<3> Las variables de entono que definen: el nombre del cluster, los puertos por defecto
-y desactivan la capa de seguridad de `xpack`
-<4> La red a la que el contenedor está conectado. (Ésta es definida al final de fichero)
-<5> El `binding` entre el puerto interno del conetendor y el puerto de la
-máquina `host` en el cual estará disponible. Su sintaxis es `host-port:container-port`
+<1> Define el nombre de la imagen que será descargada del {dokreg} por defecto
+<2> El contenedor creado tomará este nombre. Interesante si se va a escribir varias veces ya que los nombres autogenerados añaden como prefijo el nombre del directorio.
+<3> Esta opción está pensada para servicios persistentes que deban recuperarse ante caídas
+<4> EL contenedor se ocnectará a esta red. Permite hacer routings esepcíficos entre contenedores.
+<5> Los puertos que exporta fuera del _stack_ y que son accesibles tanto desde la máquina host como desde otras máquinas dentro de la misma red. Se recomiendamantener le número de puertos expuestos al mínimo.
+<6> Gracias a este _binding_ entre el documento del _host_ y el del contenedor, portainer puede operar sobre le resto de conetedores ya que le estamos brindando acceso al `socket` del `docker daemon`.
+<7> Este fichero que veremos a continuación es el que tomará el contenedor con {dind} como fichero de configuración por lo que todos los ajustes que haya que hacer al {dok} del nodo los haremos desde aquí.
+<8> Definición de la red usada por todos los contenedores
+
+TIP: El contenedor con {port} no es necesario para el seguimiento del tutorial, pero permite comparar distintas herramientas así como realizar tareas se mantenimiento sobre los contenedores si algún paso se siguiera mal.
+
+El fichero de configuración antes mencionado tiene como principal objetivo solventar un conflicto con el servicio `dnsmasq` que hace que el `loopback` de los contenedores no se haga en el `localhost` de los mismos sino en el loalhost de la máquina {dind}.
+
+Para solventarlo simplemente configuramos unas dns alternativas:
+
+.daemon.json
+[source, json,subs="verbatim"]
+----
+include::{resources_dir}/daemon.json[]
+----
+
+== Puesta en marcha y configuración
+
+Con esto estaría todo listo para su puesta en marcha. Para ello comenzamos, como siempre, ejecutando:
+
+[source, bash,subs="verbatim"]
+----
+$ docker-compose up -d
+----
+
+Con los contenedores ya desplegados accedemos a la dirección donde {ran} expone su interfaz: `http://localhost:8080` y accedemos al paner principal.
+Un mensaje de warning nos indicará que debemos configurar un host.
+
+Antes de hacer eso, nos dirigimos en el menú superior a `ADMIN > Settings` y en la sección de `Host Registration URL` indicamos la opción `Something else` dándole como valor la `ip` del conetedor y el puerto `8080`.
+
+IMPORTANT: La `ip` del contenedor puede obtenerse ejecutando en la terminal `docker inspect rancher` y bajando hasta que encontremos `NetworkSettings.Networks.\{network\}.IPAddress` . Este es además uno de los casos en los que resulta cómodo haber fijado el nombre del contenedor.
+
+De este modo estamos configurando la dirección por la cual {ran} espera que accedan a él lo cual es una fuente de errores si no se configura adecuadamente. 
+
+Ahora sí podremos añadir un host desde `Add Host` en `INFRASTRUCTURE > Hosts`. Esto nos llevará a la pantalla de configuración del nuevo host en la cual elegimos tipo pordefecto `custom` y descendemos hasta la sección donde se muestra un texto para copiar:
+
+[source, bash,subs="verbatim"]
+----
+sudo docker run --rm --privileged -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/rancher:/var/lib/rancher rancher/agent:v1.2.10 http://x.x.x.x:8080/v1/scripts/XXXXX:XXXXX:XXXXX
+----
+
+Dicho texto contendrá los parámetros necesarios para configurar el {ranag} en la máquina host o en este caso, nuestro contenedor con {dind}.
+
+IMPORTANT: El contenedor con {dind} no tiene `sudo` instalado por lo que habrá que copiar el comando sin esta operación, o borrarlo tras pegarlo en la terminal
+
+Con el comando copiado volvemos a la terminal y ejecutamos:
+[source, bash, subs="verbatim"]
+----
+$ docker exec -it node sh
+----
+
+Esto nos abrirá una temrinal dentro del contenedor `node` con {dind} y en ella es donde pegaremos el comando copiado en {ran}. Tras unos logs de configuración se devolverá el control a la terminal de `node` y ya podremos salir tanto de ésta como de la de `host`.
+
+En unos segundos deberíamos ver aparecer el host en el panel de control de {ran} y ya podríamos empezar a hacer las pruebas que quisiéramos.
