@@ -1,1 +1,33 @@
- 
+// Configuración de rutas
+// :project_id: <Put a project ID if it's not set above>
+:resources_dir: {resourcesdir}/{project_id}
+:include_dir: {includedir}/{projermct_id}
+
+// Variables del documento
+:tecnologia: Tecnología
+:tecnologiav: Tecnología 1.0
+
+= Título
+Author <mail@do.main>
+v1.0, {docdate}
+:experimental:
+Abstract
+
+== Pre-requisitos
+* {tecnologiav}
+
+== Introducción
+qón.
+
+.filename
+[source, javascript,subs="verbatim"]
+----
+include::{resources_dir}/filename[]
+----
+<1> Fist bullet
+<2> Second bullet
+
+[source, bash,subs="verbatim"]
+----
+$ sudo ls
+----
