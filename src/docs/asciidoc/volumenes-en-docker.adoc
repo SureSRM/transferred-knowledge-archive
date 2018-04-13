@@ -1,0 +1,123 @@
+:project_id: volumenes-en-docker
+// Configuración de rutas
+// :project_id: <Put a project ID if it's not set above>
+:resources_dir: {resourcesdir}/{project_id}
+:include_dir: {includedir}/{projermct_id}
+
+// Variables del documento
+
+:dok: Docker
+:dokv: {dok} 17.12.0-ce
+:dokpose: {dok} Compose
+:dokposev: {dokpose} 1.19.0
+:dokposef: docker-compose.yml
+:port: Portainer
+
+= Volúmenes en {dok}
+Sergio Martín Segura <segura@unizar.es>
+v1.0, {docdate}
+:experimental:
+En este documento se estudiarán diversos aspectos sobre persistencia en {dok}.
+
+== Pre-requisitos
+* {dokv}
+* {dokposev}
+
+== Introducción
+Como es sabido, {dok} basa su comportamiento en contenedores, pero no es tan
+habitual entender el funcionamiento interno de éstos.
+
+== Imágenes y Contenedores
+
+De forma análoga a como funciona cualquier máquina (física o virtual), todo parte
+de una imagen. Una imagen no es otra cosa que un sistema de ficheros que
+refleja el estado de un sistema en un momento concreto.
+
+En el caso de {dok}, existen infinidad de imágenes disponibles para utilizar
+desde su repositorio oficial. Entre ellas se encuentran desde la imagen mínima,
+`scratch` hasta imágenes más complejas con sistemas ya instalados como `debian`,
+`ubuntu` o `alpine` o incluso con software específico o librerías y dependencias
+ya preconfiguradas como `node8`. Podríamos decir que una imagen es
+básicamente un sistema de ficheros con sus directorios y documentos empaquetados
+de una determinada manera.
+
+TIP: Todas estas imágenes se pueden encontrar en el
+https://hub.docker.com/explore/[Repositorio oficial de Docker Hub].
+
+=== Capas
+
+La *diferencia* entre una imagen y otra viene dada por las capas (`layers`) que la
+conforman. *Cada capa es un `diff` del sistema de ficheros de la imagen anterior*.
+Si partimos de una imagen base y en una capa añadimos un fichero
+`helloword.txt`, la capa que hemos creado tan sólo ocupara en memoria el tamaño
+de ese fichero.
+
+Existen varias formas de crear una nueva capa (_a.k.a. hacer cambios en el
+sistema de ficheros_):
+
+* Haciendo un cambio controlado y programado en un script `Dockerfile`.
+* Accediendo a través de la terminal al contenedor, realizando los cambios por
+línea de comandos y guardando los cambios en una ueva imagen con `docker commit`.
+
+Por cuaquiera de las dos vías, el resultado será el mismo: una nueva imágen que
+compartirá todas las capas de su imagen base. Ésto es interesante porque
+{dok} lo aprovechará para minimizar el espacio que ocupan varias imágenes.
+
+TIP: Cabe destacar que en un `Dockerfile`, cada _instrucción_ conforma una nueva
+capa y no el resultado completo de la ejecución por lo que en el ejemplo
+mencionado suponemos que sólo se ejecuta una _instrucción_ como `ADD . /opt/app`
+
+=== Instancias
+
+Si una imagen es un sistema de ficheros que refleja el estado de un sistema,
+un contenedor es una instancia "_en ejecución_" de esa imagen.
+
+TIP: El entrecomillado se debe a que un contenedor puede ser detenido y vuelto a
+poner en parcha, pero a efectos prácticos podemos diferenciar contenedores e
+imágenes en éstos términos.
+
+Parece entonces que una imagen tan sólo es una plantilla para instanciar un
+contenedor, hasta que observamos la implementación interna en la
+https://docs.docker.com/storage/storagedriver/[documentación sobre persistencia].
+
+image:{project_id}/container-layers.jpg[]
+
+En ella se puede observar cómo un contenedor no es sino una capa extra sobre una
+imagen ya existente, con una serie de metadatos y configuraciones adjuntos. Por
+esto mismo es tan sencillo realizar `docker commit`. Porque cuando ejecutamos
+dicho comando, tan sólo estamos estamos convirtiendo esa capa de
+_lectura/escritura_ a _sólo lectura_ magen.
+
+TIP: Las capas _R/W_ están almacenadas en `/var/lib/docker/containers` mientras
+que las capas _RO_ están en `/var/lib/docker/{nombre_del_driver}`. Ésto se puede
+comprobar en esta https://docs.docker.com/storage/storagedriver/#copying-makes-containers-efficient[_demo_ de su documentación oficial].
+
+Cada cambio que hacemos en un contenedor en ejecución es en realidad hecho sobre
+el sistema de ficheros en el que están alojada su capa _R/W_ utilizando además
+una política _copy-on-write_.
+
+TIP: Cada _driver_ ejecuta esta política de forma diferente. Para más información,
+consultar https://docs.docker.com/storage/storagedriver/#copying-makes-containers-efficient[la documentación].
+
+Este proceso tiene un impacto en el rendimiento del sistema, ese fue uno de los
+motivos para crear los *volúmenes*, para casos en los que se necesita un
+_IO_ intensivo y eficiente y no se necesita que formen parte del sistema de capas.
+
+== Volúmenes
+
+Como cita la https://docs.docker.com/engine/reference/commandline/commit/#extended-description[documentación sobre el comando `docker commit`]:
+[quote, Documentación Oficial de {dok}]
+____
+The commit operation *will not include any data contained in volumes* mounted inside the container.
+____
+
+.filename
+[source, javascript,subs="verbatim"]
+----
+include::{resources_dir}/filename[]
+----
+
+[source, bash,subs="verbatim"]
+----
+$ sudo ls
+----
