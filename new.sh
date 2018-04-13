@@ -1,7 +1,7 @@
 #!/bin/bash
 function usage {
 echo "
-Usage: $0 [OPTIONS] [new-article-name]
+Usage: $0 [-h|-a|[-s] new-article-name]
 
 A tool to help scafolding new articles
 
@@ -10,16 +10,16 @@ Options:
   -a, --advice   Just shows advice without creating nothing else
   -s, --silent   Dont show any output
 "
-exit 1;
 }
 # Atribute control
-if [ $# != 1 ] ; then
+if [ $# -lt 1 ] || [ $# -gt 2 ] ; then
     usage
+    exit 1
 fi
 
-NAME=$(echo "$1" | tr '[:upper:]' '[:lower:]' | tr '[ _]' '-')
 
 function pre {
+NAME=$(echo "$NAME_DIRT" | tr '[:upper:]' '[:lower:]' | tr '[ _]' '-')
 SPACE=$(echo "$NAME" | tr '[a-z-]' ' ' )
 
 # Paths to the elementes to be created
@@ -35,26 +35,28 @@ function create {
 echo "Creating new article: $NAME...
 "
 echo -n "- $PATH_RESOURCES "
-# mkdir -p $PATH_RESOURCES
+mkdir -p $PATH_RESOURCES
 echo "[OK]"
 echo -n "- $PATH_IMAGES "
-# mkdir -p $PATH_IMAGES
+mkdir -p $PATH_IMAGES
 echo "[OK]"
 echo -n "- $PATH_INCLUDE "
-# mkdir -p $PATH_INCLUDE
+mkdir -p $PATH_INCLUDE
 echo "[OK]"
 echo -n "- $PATH_ASCIIDOC "
-# cp ./template/page.adoc $PATH_ASCIIDOC
+echo ":project_id: $NAME" >> $PATH_ASCIIDOC
+cat ./template/page.adoc >> $PATH_ASCIIDOC
 echo "[OK]"
 echo ""
 }
+
 function create_silent {
 # Creating directories and files
-echo ""
-# mkdir -p $PATH_RESOURCES
-# mkdir -p $PATH_IMAGES
-# mkdir -p $PATH_INCLUDE
-# cp ./template/page.adoc $PATH_ASCIIDOC
+mkdir -p $PATH_RESOURCES
+mkdir -p $PATH_IMAGES
+mkdir -p $PATH_INCLUDE
+echo ":project_id: $NAME" >> $PATH_ASCIIDOC
+cat ./template/page.adoc >> $PATH_ASCIIDOC
 }
 
 function advice {
@@ -89,9 +91,28 @@ function post {
 
 # Switching behavior
 case $1 in
-  -a|--advice) pre; advice;;
-  -h|--help) usage;;
-  -s|--silent) pre; create_silent;;
-  -*) usage;;
-  *) pre; create; advice; post;
+  -a|--advice)
+      NAME_DIRT=$1;
+      pre;
+      advice;;
+  -s|--silent)
+      if [ $# -eq 1 ] ; then
+        usage
+        exit 1
+      fi;
+      NAME_DIRT=$2;
+      pre;
+      create_silent;;
+  -h|--help)
+      usage;
+      exit 1;;
+  -*)
+      usage;
+      exit 1;;
+  *)
+      NAME_DIRT=$1;
+      pre;
+      create;
+      advice;
+      post;;
 esac
