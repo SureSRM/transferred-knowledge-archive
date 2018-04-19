@@ -94,7 +94,7 @@ la respuesta. Esto puede llevar a situaciones en las que llegue una respuesta
 tan tarde, que el estado de la aplicación haya cambiado y ya no sea deseable esa
 respuesta.
 
-=== Comportamiento
+==== Comportamiento
 Para observar esto mejor, se ha configurado el `json-server` con un delay de 500ms.
 Podemos entonces ejecutar estos pasos:
 
@@ -160,7 +160,7 @@ llegaran en orden inverso: Primero las sugerencias de `ab` y luego las de `abu`.
 Ésto llevaría a la aplicación a un estado `WRONG` persistente hasta la siguiente
 interacción del usuario.
 
-=== Código
+==== Código
 
 Este es el código implicado en el tratamiento del evento de actualización y del
 evento de recepción de la repuesta:
