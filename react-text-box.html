@@ -5,7 +5,8 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.5">
-<title>Índice de contenidos</title>
+<meta name="author" content="Sergio Martín Segura">
+<title>React.js: Text Box</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -510,23 +511,585 @@ table.CodeRay td.code>pre{padding:0}
 .CodeRay .head .head{color:#f4f}
 </style>
 </head>
-<body class="article">
+<body class="article toc2 toc-left">
 <div id="header">
-<h1>Índice de contenidos</h1>
+<h1>React.js: Text Box</h1>
+<div class="details">
+<span id="author" class="author">Sergio Martín Segura</span><br>
+<span id="email" class="email"><a href="mailto:segura@unizar.es">segura@unizar.es</a></span><br>
+<span id="revnumber">version 1.0,</span>
+<span id="revdate">2018-04-19</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Tabla de contenidos</div>
+<ul class="sectlevel1">
+<li><a href="#pre-requisitos">Pre-requisitos</a></li>
+<li><a href="#introducción">Introducción</a></li>
+<li><a href="#puesta-en-marcha">Puesta en marcha</a></li>
+<li><a href="#las-soluciones">Las soluciones</a>
+<ul class="sectlevel2">
+<li><a href="#searchbox-unsafe">Searchbox Unsafe</a></li>
+<li><a href="#searchbox-safe-1">Searchbox Safe 1</a></li>
+<li><a href="#searchbox-safe-2">Searchbox Safe 2</a></li>
+</ul>
+</li>
+</ul>
+</div>
 </div>
 <div id="content">
+<div id="preamble">
+<div class="sectionbody">
 <div class="paragraph">
-<p><a href="modelo-de-datos-de-elasticsearch.html">Modelo de datos de Elasticsearch</a></p>
+<p>React JS es un <em>framework</em> para la realización de aplicaciones <em>frontend</em> .</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="pre-requisitos">Pre-requisitos</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Node v8.10.0</p>
+</li>
+<li>
+<p>Node Package Manager v5.6.0</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="introducción">Introducción</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Uno de los problemas a los que se enfrenta una aplicación web que obtiene
+(<code>fetch</code>) datos de un servidor es el retardo con el que éstos mismos llegan así
+como la posibilidad de <em>inconsistencia</em> de los resultados debido a que pueden no
+llegar ordenados.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="puesta-en-marcha">Puesta en marcha</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Para la puesta en marcha del śistema debemos ejecutar desde el directorio raíz
+los comandos de instalación y arranque del servidor web y del servicio backend.</p>
 </div>
 <div class="paragraph">
-<p><a href="rancher-and-docker-in-docker.html">Rancher y DockerInDocker</a></p>
+<div class="title">Servidor Web</div>
+<p>Es el encargado de servir las páginas al navegador web. En este caso, se usará
+Node ya que viene empaquetado en la platilla que ofrece <code>create-react-app</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">$ npm install &amp;&amp; npm start</code></pre>
+</div>
 </div>
 <div class="paragraph">
-<p><a href="react-text-box.html">React Text Box</a></p>
+<div class="title">Servicio Backend</div>
+<p>Para simular un servicio utilizaremos <code>json-server</code>. Un servidor <em>ad-hoc</em> escrito
+en Javascript que permite crear servicios REST rápidamente con una sola operación.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">$ npx json-server \ <i class="conum" data-value="1"></i><b>(1)</b>
+--watch suggestions.json \ <i class="conum" data-value="2"></i><b>(2)</b>
+--port 3001 \ <i class="conum" data-value="3"></i><b>(3)</b>
+--delay 500 <i class="conum" data-value="4"></i><b>(4)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>npx &lt;package-name&gt; &lt;args&gt;</code> es un comando del Node Package Manager que ofrece descargar, ejecutar
+y eliminar la final un módulo de <code>npm</code>. Es muy útil en contraposición a
+<code>npm install -g &lt;package-name&gt; &amp;&amp; &lt;package-name&gt; &lt;args&gt;</code> si lo que se desea es
+ejecutarlo una vez y no dejar software instalado en  la máquina.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>El fichero que utilizará <code>json-sevrer</code> como fuente de datos. Se puede editar
+para añadir más palabras, si uno lo desea.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>El puesto en el expone el servicio</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>El delay con el que responderá a las peticiones. Es <strong>imprescindible</strong> este punto
+ya que queremos observar el retardo en el <em>frontend</em>.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>El fichero que utilizaremos como <em>fuente de datos</em> es:</p>
+</div>
+<div class="listingblock">
+<div class="title">suggestions.json</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="json">{
+  <span class="key"><span class="delimiter">&quot;</span><span class="content">words</span><span class="delimiter">&quot;</span></span>:[
+    {<span class="key"><span class="delimiter">&quot;</span><span class="content">value</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">abba</span><span class="delimiter">&quot;</span></span>},
+    {<span class="key"><span class="delimiter">&quot;</span><span class="content">value</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">abuela</span><span class="delimiter">&quot;</span></span>},
+    {<span class="key"><span class="delimiter">&quot;</span><span class="content">value</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">aceituna</span><span class="delimiter">&quot;</span></span>},
+    {<span class="key"><span class="delimiter">&quot;</span><span class="content">value</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">acceso</span><span class="delimiter">&quot;</span></span>}
+  ]
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="las-soluciones">Las soluciones</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Con los dos servicios <code>node</code> y <code>json-server</code> podemos acceder a la dirección donde
+el servidor de <code>node</code> está escuchando para responder la página:
+<a href="http://localhost:3000">localhost:3000</a></p>
+</div>
+<div class="paragraph">
+<p>En ella veremos tres buscadores distribuídos en 3 columas:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Search Box Unsafe</p>
+</li>
+<li>
+<p>Search Box Safe 1</p>
+</li>
+<li>
+<p>Search Box Safe 2</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Cada una de ellas se corresponde a una implementación distinta del mismo producto:
+<em>una barra de búsqueda con función de sugerencias</em>.</p>
+</div>
+<div class="sect2">
+<h3 id="searchbox-unsafe">Searchbox Unsafe</h3>
+<div class="paragraph">
+<p>Esta es la solución insegura debido a que no hace ningún tipo de comprobación en
+la respuesta. Esto puede llevar a situaciones en las que llegue una respuesta
+tan tarde, que el estado de la aplicación haya cambiado y ya no sea deseable esa
+respuesta.</p>
+</div>
+<div class="sect3">
+<h4 id="comportamiento">Comportamiento</h4>
+<div class="paragraph">
+<p>Para observar esto mejor, se ha configurado el <code>json-server</code> con un delay de 500ms.
+Podemos entonces ejecutar estos pasos:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Ejecutarmos</th>
+<th class="tableblock halign-left valign-top">Observamos</th>
+<th class="tableblock halign-left valign-top"><code>{valor-de-la-caja-de-texto, sugerencias}</code></th>
+<th class="tableblock halign-left valign-top">Consistencia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Escribir la letra <code>a</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No aparece ningún tipo de sugerencia</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{a,&lt;vacío&gt;}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LOADING</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Esperar medio segundo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aparecen las sugerencias para <code>a</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{a,sugerencias-de-a}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Escribir la letra <code>b</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Siguen apareciendo las sugerencias para <code>a</code>, teniendo el cuadro de texto <code>ab</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{ab,sugerencias-de-a}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LOADING</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Esperar medio segundo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aparecen las sugerencias para <code>ab</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{ab,sugerencias-de-ab}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Escribir la letra <code>u</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Siguen apareciendo las sugerencias para <code>ab</code>, teniendo el cuadro de texto <code>abu</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{abu,sugerencias-de-ab}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LOADING</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Borrar la <code>u</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Siguen apareciendo las sugerencias para <code>ab</code>, teniendo el cuadro de texto <code>ab</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{ab,sugerencias-de-ab}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Esperar menos de medio segundo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aparecen las sugerencias para <code>abu</code>, teniendo el cuadro de texto <code>ab</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{ab,sugerencias-de-abu}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WRONG</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Esperar menos de medio segundo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aparecen las sugerencias para <code>ab</code>, teniendo el cuadro de texto <code>ab</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{ab,sugerencias-de-ab}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>El paso clave es de este proceso, no son aquellos estados donde la consistencia es
+<code>LOADING</code>. Es inevitable una inconsistencia de ese tipo, ya que la información
+no llega inmediata.</p>
+</div>
+<div class="paragraph">
+<p>El paso clave es el <code>WRONG</code>, porque siendo el estado de la aplicación: <code>{valor-de-la-caja-de-texto, sugerencias}</code>
+consistente en el paso anterior <code>{ab, sugerencias-de-ab}</code> cambia
+<em>sólo y sin interacción del usuario</em> a un estado
+inconsistente <code>{ab, sugerencias-de-abu}</code>.</p>
+</div>
+<div class="paragraph">
+<p>Esto se debe a que la respuesta ha llegado tarde, pero el sistema la ha procesado
+y mostrado sus resultados.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Podríamos imaginar incluso una siruación peor, en la que las dos últimas respuestas
+llegaran en orden inverso: Primero las sugerencias de <code>ab</code> y luego las de <code>abu</code>.
+Ésto llevaría a la aplicación a un estado <code>WRONG</code> persistente hasta la siguiente
+interacción del usuario.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="código">Código</h4>
+<div class="paragraph">
+<p>Este es el código implicado en el tratamiento del evento de actualización y del
+evento de recepción de la repuesta:</p>
+</div>
+<div class="listingblock">
+<div class="title">/src/container/SearchBoxContainerUnsafe.jsx</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="js">    handleCallback(result){ <i class="conum" data-value="1"></i><b>(1)</b>
+        const suggestions = result.map(suggestion_json =&gt; suggestion_json.value);
+        <span class="local-variable">this</span>.setState({<span class="key">suggestions</span>: suggestions});
+    }
+
+    handleChange(event) { <i class="conum" data-value="2"></i><b>(2)</b>
+        <span class="keyword">if</span> (event.target.value) { <i class="conum" data-value="3"></i><b>(3)</b>
+            suggest(event.target.value) <i class="conum" data-value="4"></i><b>(4)</b>
+                .then(response =&gt; response.json()) <i class="conum" data-value="5"></i><b>(5)</b>
+                .then(<span class="local-variable">this</span>.handleCallback);
+
+            <span class="local-variable">this</span>.setState({<span class="key">value</span>: event.target.value}); <i class="conum" data-value="6"></i><b>(6)</b>
+        } <span class="keyword">else</span> {
+            <span class="local-variable">this</span>.setState({<span class="key">value</span>: <span class="string"><span class="delimiter">&quot;</span><span class="delimiter">&quot;</span></span>, <span class="key">suggestions</span>: []});
+        }
+
+    }</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Es la función que se ejecutará cuando se termine de parsear la respuesta.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Es la función que se ejecuta al cambiar el valor del <code>text-box</code>.
+Inicia el <code>fetch</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Comprueba que exista valor de <code>text-box</code>. Si es vacía, vacía las
+sugerencias y no lanza <code>fetch</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>El método <code>suggest()</code> es una abstracción de la API. Es una buena práctica en
+Javascript externalizar las llamadas a API en funciones que devuelvan el <code>Promise</code> que devuelve <code>fetch</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>La función <code>.then()</code> define qué función <code>callback</code> se ejecutará cuando acabe
+termine la <code>Promise</code>. En este caso, cuando termine el <code>fetching</code> se ejecutará <code>response.json()</code>
+que devuelve otro <code>Promise</code>. Cuando éste último se complete, se ejecutará nuestro <code>handleCallback()</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>Se fija el estado para <code>value</code> para que el <code>text-box</code> muestre el valor insertado.</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Como se ha mencionado, <code>.then()</code> requiere una función como parámetro. En
+ambos casos vemos dos formas de proveerle una.
+En el primero, usamos una función
+anónima, también llamadas lambda (<code>λ</code>), definida usando la sintaxis de ECMAScript6
+<code>(parámetro) &#8658; elementro-de-respuesta</code>.
+En el segundo caso pasamos una función con nombre, creada por nosotros. Es importante
+entender que para pasar una función, escribimos su nombre <strong>sin paréntesis ()</strong> ya que
+si ponemos sus paréntesis, la estaremos <strong>ejecutando/evaluando</strong> y lo que pasaremos a
+<code>.then()</code> será el resultado de esa evaluación/ejecución.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="searchbox-safe-1">Searchbox Safe 1</h3>
+<div class="paragraph">
+<p>Para solventar el problema detectado en la solución anterior, hay que <em>adjuntar</em>
+a la función de respuesta (<code>callback</code>) información sobre el estado en el fue generada
+esa petición. Posteriormente, en el momento en el que se recibe la respuesta, esa
+función <code>callback</code> debe discernir si la respuesta aún es válida en base a:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>El estado actual</p>
+</li>
+<li>
+<p><strong>La información sobre el estado anterior</strong></p>
+</li>
+<li>
+<p>La respuesta</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Para pasar esa información, crearemos una función que devuelva otra función:</p>
+</div>
+<div class="listingblock">
+<div class="title">/src/container/SearchBoxContainerSafe1.jsx</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="js">    handleCallback(result){ <i class="conum" data-value="1"></i><b>(1)</b>
+        const suggestions = result.map(suggestion_json =&gt; suggestion_json.value);
+        <span class="local-variable">this</span>.setState({<span class="key">suggestions</span>: suggestions});
+    }
+
+    checkValue(eventValue){ <i class="conum" data-value="2"></i><b>(2)</b>
+        <span class="keyword">return</span> eventValue === <span class="local-variable">this</span>.state.value;
+    }
+
+    thenBuilder(value) { <i class="conum" data-value="3"></i><b>(3)</b>
+        <span class="keyword">return</span> response =&gt; { <i class="conum" data-value="4"></i><b>(4)</b>
+            <span class="keyword">if</span> (<span class="local-variable">this</span>.checkValue(value)) {
+                response.json().then(<span class="local-variable">this</span>.handleCallback)
+            }
+        }
+    }
+
+    handleChange(event) {
+        <span class="keyword">if</span> (event.target.value) {
+            suggest(event.target.value)
+                .then(<span class="local-variable">this</span>.thenBuilder(event.target.value)); <i class="conum" data-value="5"></i><b>(5)</b>
+
+            <span class="local-variable">this</span>.setState({<span class="key">value</span>: event.target.value});
+        } <span class="keyword">else</span> {
+            <span class="local-variable">this</span>.setState({<span class="key">value</span>: <span class="string"><span class="delimiter">&quot;</span><span class="delimiter">&quot;</span></span>, <span class="key">suggestions</span>: []});
+        }
+
+    }</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>La función es idéntica la caso anterior.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Comprueba que el valor que recibe y el valor del estado son iguales.
+Así se asegura consistencia.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Esta es la nueva función que resuelve el problema. Toma como parámetro un valor,
+que en este caso es el valor por el cual se van a pedir las sugerencias. Devuelve
+<strong>una función</strong> de un parámetro. (Igual que la función que requiere <code>.then()</code>)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Esa función devuelta, tiene como parámetro el <code>response</code> de la petición y su
+lógica consiste en que, si el <code>chackValue()</code> es correcto, se continúa el proceso y
+si no, se aborta.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Dentro del primer <code>.then()</code> se <strong>ejecuta/evalua</strong> <code>thenBuilder()</code> pasándole
+el valor del <code>text-box</code>. La función que se pasa a <code>.then()</code> es la  devuelve esta
+ejecución/evaluación, no <code>thenBuilder()</code> en sí.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>De éste modo, un tanto farragoso, se ha implementado una solución robusta que solventa
+los errores al repetir los pasos de la solución insegura.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Si no se ha comprendido bien el funcionamiento de esta solución, tal vez ayude
+observar la siguiente y después volver a ésta.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Para endurecer aún más la seguridad, sería deseable establecer un timeout
+y controlar la lógica en caso de error (4XX o 5XX).
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="searchbox-safe-2">Searchbox Safe 2</h3>
+<div class="paragraph">
+<p>El principal error de la solución anterior es su verbosa forma de aplicar una técnica
+muy conocida en la <em>programación funcional</em>: El <code>currying</code>.</p>
+</div>
+<div class="paragraph">
+<p>El <code>currying</code> básicamente implica <strong>definir una función que devuelve otra función.</strong>
+La primera función toma un(os) parámetro(s) y los usa para modelar segunda función, la devuelta.</p>
+</div>
+<div class="paragraph">
+<p>El lenguaje usado, <code>ECMAScript6</code>, soporta nativamente una sintaxis específica para
+currying de modo que su aplicación es tremendamente ligera en términos de verbosidad.</p>
+</div>
+<div class="paragraph">
+<p>En <code>ES6</code> podemos definir:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="js"><span class="comment">// Función anónima</span>
+() =&gt; valor-de-<span class="keyword">return</span>;
+
+<span class="comment">// Función con nombre</span>
+nombre_de_la_funcion(){
+  <span class="keyword">return</span> valor_de_return
+};
+<span class="comment">// Forma anónima equivalente (a la que se le da nombre después) (ES6 style)</span>
+nombre_de_la_funcion = () =&gt; valor_de_return;
+
+<span class="comment">// Función con nombre que devuelve función anónima (currying)</span>
+nombre_de_la_funcion(arg1){
+  <span class="keyword">return</span> (arg2) =&gt; &lt;c<span class="error">ó</span>digo que usa arg1 y arg2&gt;
+};
+
+<span class="comment">// Forma anónima equivalente (a la que se le da nombre después)</span>
+<span class="comment">// que devuelve función anónima  (ES6 style)</span>
+nombre_de_la_funcion = (arg1) =&gt; (arg2) =&gt;  &lt;c<span class="error">ó</span>digo que usa arg1 y arg2&gt;;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Cualquiera de las dos sintaxis que usemos en el <code>currying</code> nos dará el mismo
+resultado, y podrá ser llamado:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="js">nombre_de_la_funcion(arg1);
+<span class="comment">//return: función2</span>
+
+nombre_de_la_funcion(arg1)(arg2);
+<span class="comment">//return: El resultado de &lt;código que usa arg1 y arg2&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Sabiendo ésto, hemos aplicado ésta técnica para simplificar el código combinando
+<code>thenBuilder()</code> y <code>handleChange()</code> en una sola función:</p>
+</div>
+<div class="listingblock">
+<div class="title">/src/container/SearchBoxContainerSafe2.jsx</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="js">    checkValue(eventValue){
+        <span class="keyword">return</span> eventValue === <span class="local-variable">this</span>.state.value;
+    }
+
+    handleCallback = (value) =&gt; (response) =&gt; { <i class="conum" data-value="1"></i><b>(1)</b>
+        <span class="keyword">if</span> (<span class="local-variable">this</span>.checkValue(value)) {
+            response.json().then( (result) =&gt; <i class="conum" data-value="2"></i><b>(2)</b>
+                <span class="local-variable">this</span>.setState(
+                    {<span class="key">suggestions</span>: result.map(suggestion_json =&gt; suggestion_json.value)}
+                )
+            )
+        }
+    };
+
+    handleChange(event) {
+        <span class="keyword">if</span> (event.target.value) {
+            suggest(event.target.value)
+                .then(<span class="local-variable">this</span>.handleCallback(event.target.value));
+
+            <span class="local-variable">this</span>.setState({<span class="key">value</span>: event.target.value});
+        } <span class="keyword">else</span> {
+            <span class="local-variable">this</span>.setState({<span class="key">value</span>: <span class="string"><span class="delimiter">&quot;</span><span class="delimiter">&quot;</span></span>, <span class="key">suggestions</span>: []});
+        }
+    }</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Definición de la nueva función, utilizando la sintaxis de <code>ES6</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Aquí es donde se anidan lo que antes eran dos funciones. Esta función anónima
+es la que antes se llamaba <code>handleChange()</code>. De este modo queda más compacto ya que
+el propio <code>result.map()</code> se hace dentro del <code>.setState()</code> sin usar variables intermedias.</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
+Version 1.0<br>
 Last updated 2018-04-19 14:29:57 UTC
 </div>
 </div>

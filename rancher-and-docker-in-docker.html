@@ -5,7 +5,8 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.5">
-<title>Índice de contenidos</title>
+<meta name="author" content="Sergio Martín Segura">
+<title>Rancher y DockerInDocker</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -510,23 +511,252 @@ table.CodeRay td.code>pre{padding:0}
 .CodeRay .head .head{color:#f4f}
 </style>
 </head>
-<body class="article">
+<body class="article toc2 toc-left">
 <div id="header">
-<h1>Índice de contenidos</h1>
+<h1>Rancher y DockerInDocker</h1>
+<div class="details">
+<span id="author" class="author">Sergio Martín Segura</span><br>
+<span id="email" class="email"><a href="mailto:segura@unizar.es">segura@unizar.es</a></span><br>
+<span id="revnumber">version 1.0,</span>
+<span id="revdate">2018-04-19</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Tabla de contenidos</div>
+<ul class="sectlevel1">
+<li><a href="#pre-requisitos">Pre-requisitos</a></li>
+<li><a href="#introducción">Introducción</a></li>
+<li><a href="#configuración-del-entorno">Configuración del entorno</a></li>
+<li><a href="#puesta-en-marcha-y-configuración">Puesta en marcha y configuración</a></li>
+</ul>
+</div>
 </div>
 <div id="content">
+<div id="preamble">
+<div class="sectionbody">
 <div class="paragraph">
-<p><a href="modelo-de-datos-de-elasticsearch.html">Modelo de datos de Elasticsearch</a></p>
+<p>Rancher es un gestor gestores de contenedores distribuídos. Permite orquestar depliegues en máquinas remotas, replicar nodos y servicios y crear arquitecturas de red de forma rápida y sencilla.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="pre-requisitos">Pre-requisitos</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Docker 17.12.0-ce</p>
+</li>
+<li>
+<p>Docker Compose 1.19.0</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="introducción">Introducción</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>En este proyecto se abordará la creación de un entorno de pruebas en el que experimentar con las funcionalidades de Rancher sin necesidad de desplegar servidores remotos o instalar gestores de máquinas virtuales.</p>
 </div>
 <div class="paragraph">
-<p><a href="rancher-and-docker-in-docker.html">Rancher y DockerInDocker</a></p>
+<p>Para ello se hará uso de la técnica DockerInDocker que permite desplegar un contenedor docker con otro docker en su interior, de modo que, a efectos prácticos, figure como un nodo independiente en la misma red.</p>
 </div>
 <div class="paragraph">
-<p><a href="react-text-box.html">React Text Box</a></p>
+<p>Si bien es cierto que desde Docker desaconsejan el uso de esta técnica en entornos de producción, resulta ideal para hacer un <em>bootstrapring</em> rápido del concepto y verlo en acción.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuración-del-entorno">Configuración del entorno</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>La configuración del entorno se hace enormemente sencilla gracias a Docker Compose. La única configuración externa a tener en cuenta es el fichero</p>
+</div>
+<div class="listingblock">
+<div class="title">docker-compose.yml</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="yaml"><span class="key">version</span>: <span class="string"><span class="content">'2'</span></span>
+
+<span class="key">services</span>:
+
+    <span class="key">rancher</span>:
+        <span class="key">image</span>: <span class="string"><span class="content">rancher/server:v1.6.15 </span></span><i class="conum" data-value="1"></i><b>(1)</b>
+        <span class="key">container_name</span>: <span class="string"><span class="content">rancher </span></span><i class="conum" data-value="2"></i><b>(2)</b>
+        <span class="key">restart</span>: <span class="string"><span class="content">unless-stopped </span></span><i class="conum" data-value="3"></i><b>(3)</b>
+        <span class="key">networks</span>:
+            - <span class="string"><span class="content">server-local </span></span><i class="conum" data-value="4"></i><b>(4)</b>
+        <span class="key">ports</span>:
+            - <span class="string"><span class="content">8080:8080 </span></span><i class="conum" data-value="5"></i><b>(5)</b>
+
+    <span class="key">portainer</span>:
+        <span class="key">image</span>: <span class="string"><span class="content">portainer/portainer</span></span>
+        <span class="key">container_name</span>: <span class="string"><span class="content">portainer</span></span>
+        <span class="key">restart</span>: <span class="string"><span class="content">always</span></span>
+        <span class="key">volumes</span>:
+            - <span class="string"><span class="content">/var/run/docker.sock:/var/run/docker.sock </span></span><i class="conum" data-value="6"></i><b>(6)</b>
+        <span class="key">networks</span>:
+            - <span class="string"><span class="content">server-local</span></span>
+        <span class="key">ports</span>:
+            - <span class="string"><span class="content">9000:9000</span></span>
+
+    <span class="key">node</span>:
+        <span class="key">image</span>: <span class="string"><span class="content">docker:dind</span></span>
+        <span class="key">container_name</span>: <span class="string"><span class="content">node</span></span>
+        <span class="key">privileged</span>: <span class="string"><span class="content">true</span></span>
+        <span class="key">restart</span>: <span class="string"><span class="content">always</span></span>
+        <span class="key">volumes</span>:
+            - <span class="string"><span class="content">./daemon.json:/etc/docker/daemon.json </span></span><i class="conum" data-value="7"></i><b>(7)</b>
+        <span class="key">networks</span>:
+            - <span class="string"><span class="content">server-local</span></span>
+        <span class="key">ports</span>:
+            - <span class="string"><span class="content">8081:8081</span></span>
+
+<span class="key">networks</span>:
+    <span class="key">server-local</span>:
+        <span class="key">driver</span>: <span class="string"><span class="content">bridge </span></span> <i class="conum" data-value="8"></i><b>(8)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Define el nombre de la imagen que será descargada del Docker Registry por defecto</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>El contenedor creado tomará este nombre. Interesante si se va a escribir varias veces ya que los nombres autogenerados añaden como prefijo el nombre del directorio.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Esta opción está pensada para servicios persistentes que deban recuperarse ante caídas</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>EL contenedor se ocnectará a esta red. Permite hacer routings esepcíficos entre contenedores.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Los puertos que exporta fuera del <em>stack</em> y que son accesibles tanto desde la máquina host como desde otras máquinas dentro de la misma red. Se recomiendamantener le número de puertos expuestos al mínimo.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>Gracias a este <em>binding</em> entre el documento del <em>host</em> y el del contenedor, portainer puede operar sobre le resto de conetedores ya que le estamos brindando acceso al <code>socket</code> del <code>docker daemon</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="7"></i><b>7</b></td>
+<td>Este fichero que veremos a continuación es el que tomará el contenedor con DockerInDocker como fichero de configuración por lo que todos los ajustes que haya que hacer al Docker del nodo los haremos desde aquí.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="8"></i><b>8</b></td>
+<td>Definición de la red usada por todos los contenedores</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+El contenedor con Portainer no es necesario para el seguimiento del tutorial, pero permite comparar distintas herramientas así como realizar tareas se mantenimiento sobre los contenedores si algún paso se siguiera mal.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>El fichero de configuración antes mencionado tiene como principal objetivo solventar un conflicto con el servicio <code>dnsmasq</code> que hace que el <code>loopback</code> de los contenedores no se haga en el <code>localhost</code> de los mismos sino en el loalhost de la máquina DockerInDocker.</p>
+</div>
+<div class="paragraph">
+<p>Para solventarlo simplemente configuramos unas dns alternativas:</p>
+</div>
+<div class="listingblock">
+<div class="title">daemon.json</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="json">{
+    <span class="key"><span class="delimiter">&quot;</span><span class="content">dns</span><span class="delimiter">&quot;</span></span>: [<span class="string"><span class="delimiter">&quot;</span><span class="content">8.8.8.8</span><span class="delimiter">&quot;</span></span>,<span class="string"><span class="delimiter">&quot;</span><span class="content">8.8.4.4</span><span class="delimiter">&quot;</span></span>]
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="puesta-en-marcha-y-configuración">Puesta en marcha y configuración</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Con esto estaría todo listo para su puesta en marcha. Para ello comenzamos, como siempre, ejecutando:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">$ docker-compose up -d</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Con los contenedores ya desplegados accedemos a la dirección donde Rancher expone su interfaz: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code> y accedemos al paner principal.
+Un mensaje de warning nos indicará que debemos configurar un host.</p>
+</div>
+<div class="paragraph">
+<p>Antes de hacer eso, nos dirigimos en el menú superior a <code>ADMIN &gt; Settings</code> y en la sección de <code>Host Registration URL</code> indicamos la opción <code>Something else</code> dándole como valor la <code>ip</code> del conetedor y el puerto <code>8080</code>.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+La <code>ip</code> del contenedor puede obtenerse ejecutando en la terminal <code>docker inspect rancher</code> y bajando hasta que encontremos <code>NetworkSettings.Networks.{network}.IPAddress</code> . Este es además uno de los casos en los que resulta cómodo haber fijado el nombre del contenedor.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>De este modo estamos configurando la dirección por la cual Rancher espera que accedan a él lo cual es una fuente de errores si no se configura adecuadamente.</p>
+</div>
+<div class="paragraph">
+<p>Ahora sí podremos añadir un host desde <code>Add Host</code> en <code>INFRASTRUCTURE &gt; Hosts</code>. Esto nos llevará a la pantalla de configuración del nuevo host en la cual elegimos tipo pordefecto <code>custom</code> y descendemos hasta la sección donde se muestra un texto para copiar:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">sudo docker run --rm --privileged -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/rancher:/var/lib/rancher rancher/agent:v1.2.10 http://x.x.x.x:8080/v1/scripts/XXXXX:XXXXX:XXXXX</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Dicho texto contendrá los parámetros necesarios para configurar el Rancher Agent en la máquina host o en este caso, nuestro contenedor con DockerInDocker.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+El contenedor con DockerInDocker no tiene <code>sudo</code> instalado por lo que habrá que copiar el comando sin esta operación, o borrarlo tras pegarlo en la terminal
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Con el comando copiado volvemos a la terminal y ejecutamos:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">$ docker exec -it node sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Esto nos abrirá una temrinal dentro del contenedor <code>node</code> con DockerInDocker y en ella es donde pegaremos el comando copiado en Rancher. Tras unos logs de configuración se devolverá el control a la terminal de <code>node</code> y ya podremos salir tanto de ésta como de la de <code>host</code>.</p>
+</div>
+<div class="paragraph">
+<p>En unos segundos deberíamos ver aparecer el host en el panel de control de Rancher y ya podríamos empezar a hacer las pruebas que quisiéramos.</p>
+</div>
+</div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
+Version 1.0<br>
 Last updated 2018-04-19 14:29:57 UTC
 </div>
 </div>
