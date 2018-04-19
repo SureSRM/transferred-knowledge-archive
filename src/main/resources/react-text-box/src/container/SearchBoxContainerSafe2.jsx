@@ -18,14 +18,14 @@ class SearchBoxContainer extends Component {
         this.handleCallback = this.handleCallback.bind(this);
     }
 
-
+    //tag::fetch[]
     checkValue(eventValue){
         return eventValue === this.state.value;
     }
 
-    handleCallback = (value) => (response) => {
+    handleCallback = (value) => (response) => { //<1>
         if (this.checkValue(value)) {
-            response.json().then( (result) =>
+            response.json().then( (result) => // <2>
                 this.setState(
                     {suggestions: result.map(suggestion_json => suggestion_json.value)}
                 )
@@ -43,6 +43,7 @@ class SearchBoxContainer extends Component {
             this.setState({value: "", suggestions: []});
         }
     }
+    //end::fetch[]
 
     render() {
         return (
