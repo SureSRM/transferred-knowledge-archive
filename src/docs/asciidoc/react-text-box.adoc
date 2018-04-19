@@ -1,0 +1,292 @@
+// Configuración de rutas
+:project_id: react-text-box
+:resources_dir: {resourcesdir}/{project_id}
+:include_dir: {includedir}/{project_id}
+
+// Variables del documento
+:rk: React JS
+:nod: Node
+:nodv: {nod} v8.10.0
+:npm: {nod} Package Manager
+:npmv: {npm} v5.6.0
+
+= React.js: Text Box
+Sergio Martín Segura <segura@unizar.es>
+v1.0, {docdate}
+:experimental:
+{rk} es un _framework_ para la realización de aplicaciones _frontend_ .
+
+== Pre-requisitos
+* {nodv}
+* {npmv}
+
+== Introducción
+
+Uno de los problemas a los que se enfrenta una aplicación web que obtiene
+(`fetch`) datos de un servidor es el retardo con el que éstos mismos llegan así
+como la posibilidad de _inconsistencia_ de los resultados debido a que pueden no
+llegar ordenados.
+
+== Puesta en marcha
+
+Para la puesta en marcha del śistema debemos ejecutar desde el directorio raíz
+los comandos de instalación y arranque del servidor web y del servicio backend.
+
+.Servidor Web
+
+Es el encargado de servir las páginas al navegador web. En este caso, se usará
+{nod} ya que viene empaquetado en la platilla que ofrece `create-react-app`.
+
+[source, bash,subs="verbatim"]
+----
+$ npm install && npm start
+----
+
+.Servicio Backend
+
+Para simular un servicio utilizaremos `json-server`. Un servidor _ad-hoc_ escrito
+en Javascript que permite crear servicios REST rápidamente con una sola operación.
+
+[source, bash,subs="verbatim"]
+----
+$ npx json-server \ <1>
+--watch suggestions.json \ <2>
+--port 3001 \ <3>
+--delay 500 <4>
+----
+<1> `npx <package-name> <args>` es un comando del {npm} que ofrece descargar, ejecutar
+y eliminar la final un módulo de `npm`. Es muy útil en contraposición a
+`npm install -g <package-name> && <package-name> <args>` si lo que se desea es
+ejecutarlo una vez y no dejar software instalado en  la máquina.
+<2> El fichero que utilizará `json-sevrer` como fuente de datos. Se puede editar
+para añadir más palabras, si uno lo desea.
+<3> El puesto en el expone el servicio
+<4> El delay con el que responderá a las peticiones. Es **imprescindible** este punto
+ya que queremos observar el retardo en el _frontend_.
+
+El fichero que utilizaremos como _fuente de datos_ es:
+
+.suggestions.json
+[source, json,subs="verbatim"]
+----
+include::{resources_dir}/suggestions.json[]
+----
+
+== Las soluciones
+
+Con los dos servicios `node` y `json-server` podemos acceder a la dirección donde
+el servidor de `node` está escuchando para responder la página:
+http://localhost:3000[localhost:3000]
+
+En ella veremos tres buscadores distribuídos en 3 columas:
+
+* Search Box Unsafe
+* Search Box Safe 1
+* Search Box Safe 2
+
+Cada una de ellas se corresponde a una implementación distinta del mismo producto:
+_una barra de búsqueda con función de sugerencias_.
+
+=== Searchbox Unsafe
+
+Esta es la solución insegura debido a que no hace ningún tipo de comprobación en
+la respuesta. Esto puede llevar a situaciones en las que llegue una respuesta
+tan tarde, que el estado de la aplicación haya cambiado y ya no sea deseable esa
+respuesta.
+
+=== Comportamiento
+Para observar esto mejor, se ha configurado el `json-server` con un delay de 500ms.
+Podemos entonces ejecutar estos pasos:
+
+|=======
+|Ejecutarmos |Observamos |`{valor-de-la-caja-de-texto, sugerencias}` | Consistencia
+
+|Escribir la letra `a`
+|No aparece ningún tipo de sugerencia
+|`{a,<vacío>}`
+|LOADING
+
+|Esperar medio segundo
+|Aparecen las sugerencias para `a`
+|`{a,sugerencias-de-a}`
+|OK
+
+|Escribir la letra `b`
+|Siguen apareciendo las sugerencias para `a`, teniendo el cuadro de texto `ab`
+|`{ab,sugerencias-de-a}`
+|LOADING
+
+|Esperar medio segundo
+|Aparecen las sugerencias para `ab`
+|`{ab,sugerencias-de-ab}`
+|OK
+
+|Escribir la letra `u`
+|Siguen apareciendo las sugerencias para `ab`, teniendo el cuadro de texto `abu`
+|`{abu,sugerencias-de-ab}`
+|LOADING
+
+|Borrar la `u`
+|Siguen apareciendo las sugerencias para `ab`, teniendo el cuadro de texto `ab`
+|`{ab,sugerencias-de-ab}`
+|OK
+
+|Esperar menos de medio segundo
+|Aparecen las sugerencias para `abu`, teniendo el cuadro de texto `ab`
+|`{ab,sugerencias-de-abu}`
+|WRONG
+
+|Esperar menos de medio segundo
+|Aparecen las sugerencias para `ab`, teniendo el cuadro de texto `ab`
+|`{ab,sugerencias-de-ab}`
+|OK
+
+|=======
+
+El paso clave es de este proceso, no son aquellos estados donde la consistencia es
+`LOADING`. Es inevitable una inconsistencia de ese tipo, ya que la información
+no llega inmediata.
+
+El paso clave es el `WRONG`, porque siendo el estado de la aplicación: `{valor-de-la-caja-de-texto, sugerencias}`
+consistente en el paso anterior `{ab, sugerencias-de-ab}` cambia
+_sólo y sin interacción del usuario_ a un estado
+inconsistente `{ab, sugerencias-de-abu}`.
+
+Esto se debe a que la respuesta ha llegado tarde, pero el sistema la ha procesado
+y mostrado sus resultados.
+
+WARNING: Podríamos imaginar incluso una siruación peor, en la que las dos últimas respuestas
+llegaran en orden inverso: Primero las sugerencias de `ab` y luego las de `abu`.
+Ésto llevaría a la aplicación a un estado `WRONG` persistente hasta la siguiente
+interacción del usuario.
+
+=== Código
+
+Este es el código implicado en el tratamiento del evento de actualización y del
+evento de recepción de la repuesta:
+
+./src/container/SearchBoxContainerUnsafe.jsx
+[source, js, subs="verbatim"]
+----
+include::{resources_dir}/src/container/SearchBoxContainerUnsafe.jsx[tag=fetch]
+----
+<1> Es la función que se ejecutará cuando se termine de parsear la respuesta.
+<2> Es la función que se ejecuta al cambiar el valor del `text-box`.
+Inicia el `fetch`.
+<3> Comprueba que exista valor de `text-box`. Si es vacía, vacía las
+sugerencias y no lanza `fetch`.
+<4> El método `suggest()` es una abstracción de la API. Es una buena práctica en
+Javascript externalizar las llamadas a API en funciones que devuelvan el `Promise` que devuelve `fetch`.
+<5> La función `.then()` define qué función `callback` se ejecutará cuando acabe
+termine la `Promise`. En este caso, cuando termine el `fetching` se ejecutará `response.json()`
+que devuelve otro `Promise`. Cuando éste último se complete, se ejecutará nuestro `handleCallback()`.
+<6> Se fija el estado para `value` para que el `text-box` muestre el valor insertado.
+
+TIP: Como se ha mencionado, `.then()` requiere una función como parámetro. En
+ambos casos vemos dos formas de proveerle una.
+En el primero, usamos una función
+anónima, también llamadas lambda (`λ`), definida usando la sintaxis de ECMAScript6
+`(parámetro) => elementro-de-respuesta`.
+En el segundo caso pasamos una función con nombre, creada por nosotros. Es importante
+entender que para pasar una función, escribimos su nombre **sin paréntesis ()** ya que
+si ponemos sus paréntesis, la estaremos **ejecutando/evaluando** y lo que pasaremos a
+`.then()` será el resultado de esa evaluación/ejecución.
+
+=== Searchbox Safe 1
+
+Para solventar el problema detectado en la solución anterior, hay que _adjuntar_
+a la función de respuesta (`callback`) información sobre el estado en el fue generada
+esa petición. Posteriormente, en el momento en el que se recibe la respuesta, esa
+función `callback` debe discernir si la respuesta aún es válida en base a:
+
+* El estado actual
+* **La información sobre el estado anterior**
+* La respuesta
+
+Para pasar esa información, crearemos una función que devuelva otra función:
+
+./src/container/SearchBoxContainerSafe1.jsx
+[source, js, subs="verbatim"]
+----
+include::{resources_dir}/src/container/SearchBoxContainerSafe1.jsx[tag=fetch]
+----
+<1> La función es idéntica la caso anterior.
+<2> Comprueba que el valor que recibe y el valor del estado son iguales.
+Así se asegura consistencia.
+<3> Esta es la nueva función que resuelve el problema. Toma como parámetro un valor,
+que en este caso es el valor por el cual se van a pedir las sugerencias. Devuelve
+**una función** de un parámetro. (Igual que la función que requiere `.then()`)
+<4> Esa función devuelta, tiene como parámetro el `response` de la petición y su
+lógica consiste en que, si el `chackValue()` es correcto, se continúa el proceso y
+si no, se aborta.
+<5> Dentro del primer `.then()` se **ejecuta/evalua** `thenBuilder()` pasándole
+el valor del `text-box`. La función que se pasa a `.then()` es la  devuelve esta
+ejecución/evaluación, no `thenBuilder()` en sí.
+
+De éste modo, un tanto farragoso, se ha implementado una solución robusta que solventa
+los errores al repetir los pasos de la solución insegura.
+
+TIP: Si no se ha comprendido bien el funcionamiento de esta solución, tal vez ayude
+observar la siguiente y después volver a ésta.
+
+WARNING: Para endurecer aún más la seguridad, sería deseable establecer un timeout
+y controlar la lógica en caso de error (4XX o 5XX).
+
+=== Searchbox Safe 2
+
+El principal error de la solución anterior es su verbosa forma de aplicar una técnica
+muy conocida en la _programación funcional_: El `currying`.
+
+El `currying` básicamente implica **definir una función que devuelve otra función.**
+La primera función toma un(os) parámetro(s) y los usa para modelar segunda función, la devuelta.
+
+El lenguaje usado, `ECMAScript6`, soporta nativamente una sintaxis específica para
+currying de modo que su aplicación es tremendamente ligera en términos de verbosidad.
+
+En `ES6` podemos definir:
+[source, js, subs="verbatim"]
+----
+// Función anónima
+() => valor-de-return;
+
+// Función con nombre
+nombre_de_la_funcion(){
+  return valor_de_return
+};
+// Forma anónima equivalente (a la que se le da nombre después) (ES6 style)
+nombre_de_la_funcion = () => valor_de_return;
+
+// Función con nombre que devuelve función anónima (currying)
+nombre_de_la_funcion(arg1){
+  return (arg2) => <código que usa arg1 y arg2>
+};
+
+// Forma anónima equivalente (a la que se le da nombre después)
+// que devuelve función anónima  (ES6 style)
+nombre_de_la_funcion = (arg1) => (arg2) =>  <código que usa arg1 y arg2>;
+----
+
+Cualquiera de las dos sintaxis que usemos en el `currying` nos dará el mismo
+resultado, y podrá ser llamado:
+
+[source, js, subs="verbatim"]
+----
+nombre_de_la_funcion(arg1);
+//return: función2
+
+nombre_de_la_funcion(arg1)(arg2);
+//return: El resultado de <código que usa arg1 y arg2>
+----
+
+Sabiendo ésto, hemos aplicado ésta técnica para simplificar el código combinando
+`thenBuilder()` y `handleChange()` en una sola función:
+
+./src/container/SearchBoxContainerSafe2.jsx
+[source, js, subs="verbatim"]
+----
+include::{resources_dir}/src/container/SearchBoxContainerSafe2.jsx[tag=fetch]
+----
+<1> Definición de la nueva función, utilizando la sintaxis de `ES6`.
+<2> Aquí es donde se anidan lo que antes eran dos funciones. Esta función anónima
+es la que antes se llamaba `handleChange()`. De este modo queda más compacto ya que
+el propio `result.map()` se hace dentro del `.setState()` sin usar variables intermedias.
