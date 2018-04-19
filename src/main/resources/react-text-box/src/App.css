@@ -1,0 +1,6 @@
+.App {
+    text-align: center;
+    display: grid;
+    grid-row-gap: 50px;
+    grid-template-columns: repeat(3, 1fr)
+}
