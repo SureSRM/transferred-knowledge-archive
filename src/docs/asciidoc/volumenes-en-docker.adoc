@@ -111,13 +111,240 @@ ____
 The commit operation *will not include any data contained in volumes* mounted inside the container.
 ____
 
-.filename
-[source, javascript,subs="verbatim"]
+
+== Docker Volume Manager
+
+Es un contenedor _Ultra Light Weight_ diseñado para exportar e importar volúmenes docker
+en paquetes así como explorar volúmenes existentes.
+
+=== Funcionalidades
+
+Las funcionalidades que ofrece éste comando son:
+
+1. Exportar un volumen existente a un fichero comprimido
+1. Importar volumen comprimido a un volumen existente
+1. Copiar un volumen a otro con otro nombre
+1. Explorar los ficheros dentro de un volumen
+1. Escribir por pantalla el contenido de un fichero dentro de un volumen
+
+TIP: La imagen exportada coincide con el nombre del volumen fuente al exportar
+y debe coincidir con el nombre del volumen destino al importar. La explicación
+es que si se quiere duplicar un volumen, existe el comando `copy` mientras que
+`export/import` están pensados para _backup/restore_ o para migrar de máquina.
+
+=== Comandos
+
+==== Comandos nativos
+
+Primero, es necesario conocer los comandos nativos que sí soporta {dok} para
+la gestión de imágenes.
+
+.Listado de volúmenes
+[source, bash, subs="verbatim"]
 ----
-include::{resources_dir}/filename[]
+docker volume ls
 ----
 
-[source, bash,subs="verbatim"]
+.Creación de un volumen
+[source, bash, subs="verbatim"]
 ----
-$ sudo ls
+docker volume create VOLUME
 ----
+
+.Borrado de un volumen
+[source, bash, subs="verbatim"]
+----
+docker volume rm VOLUME
+----
+
+==== Comandos de Docker Volume Manager
+
+El resto de funcionalidades no están soportadas y será necesario para ello
+usar la herramienta.
+
+.Exportar un volumen existente a un fichero comprimido
+[source, txt, subs="verbatim"]
+----
+./docker-volume export SOURCE_VOLUME
+----
+
+Creará un fichero comprimido en el directorio desde donde se ejecute el comando
+(`pwd`) llamado `SOURCE_VOLUME.tar` que contendrá el volumen `SOURCE_VOLUME`
+comprimido.
+
+TIP: Éste comando funciona aunque el volumen esté en uso.
+
+.Importar volumen comprimido a un volumen existente
+[source, txt, subs="verbatim"]
+----
+./docker-volume import DESTINATION_VOLUME
+----
+
+Tratará de leer el fichero comprimido llamado llamado
+`SOURCE_VOLUME.tar` que estará en el directorio desde donde se ejecute dicho
+comando (`pwd`) e importará su contenido en el volumen `SOURCE_VOLUME`.
+
+TIP: Este comando funciona aunque el volumen esté en uso. El/los
+contenedor/es que estén usando ese volumen, percibirán el `import` como
+un simple cambio de los ficheros en él.
+
+.Copiar un volumen a otro con otro nombre
+[source, txt, subs="verbatim"]
+----
+./docker-volume copy SOURCE_VOLUME DESTINATION_VOLUME
+----
+
+Copiará el contenido de el volumen `SOURCE_VOLUME` al volumen `DESTINATION_VOLUME`.
+
+TIP: Si no existe el volumen, este comando lo crea. El/los
+contenedor/es que estén usando el volumen de destino volumen, percibirán
+el `copy` como un simple cambio de los ficheros en él.
+
+.Explorar los ficheros dentro de un volumen
+[source, txt, subs="verbatim"]
+----
+./docker-volume ls VOLUME PATH
+----
+
+Muestra los ficheros y directorios en la ruta `PATH` dentro del volumen `VOLUME`.
+
+TIP: Si bien es cierto que puede ser más cómodo hacer un `export` y abrir el fichero
+coprimido, ésta funcionalidad permite ejecutar un comando `ls` sobre cualquier
+ruta dentro del volumen.
+
+.Escribir por pantalla el contenido de un fichero dentro de un volumen
+
+[source, txt, subs="verbatim"]
+----
+./docker-volume cat VOLUME PATH
+----
+
+Envía a la salida estándar el resultado de la ejecución del
+comando `cat` sobre el fichero del volumen `PATH`.
+
+TIP: Esa salida puede usarse en una `pipe` en el host encadenada con comandos como
+`grep`, `> out.txt`, `tr`, `sed`, etc.
+
+=== Funcionamiento interno
+
+La clave del éxito de esta herramienta es el uso de la imagen _ultra ligera_
+`busybox`, que contiene un set de las herramientas más comunes de unix
+simplificadas que no requieren de un sistema operativo.
+
+Gracias a esa imagen, podemos crear un contenedor _ad-hoc_ al cual le montamos
+el volumen con el que deseamos operar para luego ejecutar un comando de `bussybox`
+sobre él.
+
+Internamente, todos los comandos internos usan la estructura
+`CABECERA_COMÚN [VOLúMENES_EXTRA] busybox COMANDO`.
+
+.Cabecera común a todos los comandos internos
+[source, bash, subs="verbatim"]
+----
+docker run \ #<1>
+--rm \ #<2>
+-v $2:/vol:ro #<3>
+----
+<1> Comando que descarga (si no existe ya) la imagen dada y crea y ejecuta un
+contenedor de ella.
+<2> Argumento que estipula que el contenedor será borrado al finalizar su
+ejecución. Imprescindible para evitar la acumulación de contenedores usados.
+<3> Montaje del volumen llamado igual al segundo argumento (`$2`) al punto `/vol`
+en el contenedor.
+
+TIP: La anotación `:ro` del contenedor define que será de sólo lectura, lo que
+garantiza que la imagen original no será modificada y mucho menos dañada.
+**IMPORTANTE:** El comando `import` sí requiere permisos de escritura
+sobre el volumen original por motivos evidentes, por lo que prescinde de esta
+opción igual que el comando `copy` para su volumen destino.
+
+.export
+[source, bash, subs="verbatim"]
+----
+include::{resources_dir}/docker-volume[tag=export]
+----
+<1> Hace el `binding` el directorio local del host y el directorio `/ext` del
+contenedor.
+<2> Ejecuta el comando de comprimir `/vol` en un un `.tar` y guardarlo en el  directorio _bindeado_ `/ext`.
+
+.import
+[source, bash, subs="verbatim"]
+----
+include::{resources_dir}/docker-volume[tag=import]
+----
+<1> Hace el `binding` el directorio local del host y el directorio `/ext` del
+contenedor.
+<2> Ejecuta el comando de descomprimir el contenido del `.tar` en el
+directorio del volumen `/vol`.
+
+.copy
+[source, bash, subs="verbatim"]
+----
+include::{resources_dir}/docker-volume[tag=copy]
+----
+<1> Monta el segundo volumen en el directorio `/newvol`.
+contenedor
+<2> Ejecuta el comando de copiar todo el contenido del directorio
+del volumen `/vol` al directorio del nuevo volúmen `/newvol`.
+
+.ls
+[source, bash, subs="verbatim"]
+----
+include::{resources_dir}/docker-volume[tag=ls]
+----
+<1> Ejecuta el comando `ls` dentro del directorio `/vol` con una ruta definida
+en `$3`.
+
+.cat
+[source, bash, subs="verbatim"]
+----
+include::{resources_dir}/docker-volume[tag=cat]
+----
+<1> Ejecuta el comando `cat` dentro del directorio `/vol` con una ruta definida
+en `$3`.
+
+
+== Usos creativos de las funcionalidades
+A partir de las funcionalidades básicas se pueden extraer otros usos creativos
+de esta herramienta:
+
+.Utilizar volúmenes plantilla
+Aprovechando la capacidad de copiar volúmenes
+se pueden crear una serie de _volúmenes plantilla_ y hacer copias de ellos.
+
+_Por ejemplo:_
+
+  1. Tenemos una estructura de carpetas en el host local.
+  1. Creamos un volumen nuevo con `docker volume create <nombre_del_volumen>`.
+  (Se puede seguir algún principio de nombrado siempre que `docker` lo permita.
+    Ej: `t_<nombre_de_la_platilla>`)
+  1. Comprimimos la estructura en `<nombre_del_volumen>.tar`. (El `.tar` ha de
+    contener todo en una carpeta raíz).
+  1. Importamos el contenido del `.tar` al volumen con
+  `./docker-volume import <nombre_del_volumen>`.
+
+.Migrar de máquina contenedores con sus datos
+Al exportar un contenedor con `docker save` los volúmenes no son inluídos. Este
+herramienta permite hacer migraciones completas sin perder el estado de los mismos.
+
+_Por ejemplo:_
+
+  1. Paramos el contenedor con `docker stop <nombre_del_contenedor>`.
+  1. Listamos sus volúmenes con `docker inspect <nombre_del_contenedor>` (sección _"Mounts"_).
+  1. Guardamos el contenedor como imagen con `docker commit <nombre_del_contenedor> <nueva_tag>`.
+  1. Guardamos la nueva imagen con `docker save <nueva_tag> -o <nombre_del_contenedor>.tar`.
+  1. Exportando sus volúmenes `./docker-volume export <nombre_del_volumen>`.
+  1. Movemos los ficheros resultantes ( `contenedor.tar`, `vol1.tar`, `vol2.tar`, `...` ) a la máquina destino.
+  1. Creamos los volúmenes en la máquina destino con `docker volume create <nombre_del_volumen>`.
+  1. Importamos los volúmenes en la máquina destino con `./docker-volume import <nombre_del_volumen>`.
+  1. Cargamos la imágen en la máquina destino con `docker load -i <nombre_del_contenedor>.tar`.
+  1. Creamos un nuevo contenedor vinculando esos volúmenes a sus puntos originales con
+  `docker run <nueva_tag> -v <nombre_del_volumen>:<punto_de_montaje>`.
+
+TIP: Los pasos 3. y 4. podrían resumirse en uno sólo:
+`docker export <nombre_del_contenedor>`. El fichero resultante sería más pequeño,
+pero habríamos perdido las capas y los metadatos de la imagen. A pesar de que
+resulta tentados ahorrarnos ese espacio, en la máquina destino, puede que muchas
+de las capas usadas por la imagen ya existieran por lo que al importarse en ella,
+el espacio que ocupará en disco será menor que con `export`. En otras palabras,
+`comit && save` guarda una imagen multicapa y `export` guarda una imagen monocapa.
