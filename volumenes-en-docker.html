@@ -5,7 +5,8 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.5">
-<title>Índice de contenidos</title>
+<meta name="author" content="Sergio Martín Segura">
+<title>Volúmenes en Docker</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -512,47 +513,725 @@ table.CodeRay td.code>pre{padding:0}
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>Índice de contenidos</h1>
+<h1>Volúmenes en Docker</h1>
+<div class="details">
+<span id="author" class="author">Sergio Martín Segura</span><br>
+<span id="email" class="email"><a href="mailto:segura@unizar.es">segura@unizar.es</a></span><br>
+<span id="revnumber">version 1.0,</span>
+<span id="revdate">2018-04-27</span>
+</div>
 <div id="toc" class="toc2">
 <div id="toctitle">Tabla de contenidos</div>
 <ul class="sectlevel1">
-<li><a href="#docker">Docker</a></li>
-<li><a href="#docker-y-elasticsearch">Docker y Elasticsearch</a></li>
-<li><a href="#react-js">React.js</a></li>
+<li><a href="#pre-requisitos">Pre-requisitos</a></li>
+<li><a href="#introducción">Introducción</a></li>
+<li><a href="#imágenes-y-contenedores">Imágenes y Contenedores</a>
+<ul class="sectlevel2">
+<li><a href="#capas">Capas</a></li>
+<li><a href="#instancias">Instancias</a></li>
+</ul>
+</li>
+<li><a href="#volúmenes">Volúmenes</a></li>
+<li><a href="#docker-volume-manager">Docker Volume Manager</a>
+<ul class="sectlevel2">
+<li><a href="#funcionalidades">Funcionalidades</a></li>
+<li><a href="#comandos">Comandos</a></li>
+<li><a href="#funcionamiento-interno">Funcionamiento interno</a></li>
+</ul>
+</li>
+<li><a href="#usos-creativos-de-las-funcionalidades">Usos creativos de las funcionalidades</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
-<div class="sect1">
-<h2 id="docker">Docker</h2>
+<div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p><a href="volumenes-en-docker.html">Volúmenes en Docker</a></p>
-</div>
-<div class="paragraph">
-<p><a href="rancher-and-docker-in-docker.html">Rancher y DockerInDocker</a></p>
+<p>En este documento se estudiarán diversos aspectos sobre persistencia en Docker.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="docker-y-elasticsearch">Docker y Elasticsearch</h2>
+<h2 id="pre-requisitos">Pre-requisitos</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p><a href="modelo-de-datos-de-elasticsearch.html">Modelo de datos de Elasticsearch</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Docker 17.12.0-ce</p>
+</li>
+<li>
+<p>Docker Compose 1.19.0</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="react-js">React.js</h2>
+<h2 id="introducción">Introducción</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><a href="react-text-box.html">React Text Box</a></p>
+<p>Como es sabido, Docker basa su comportamiento en contenedores, pero no es tan
+habitual entender el funcionamiento interno de éstos.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="imágenes-y-contenedores">Imágenes y Contenedores</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>De forma análoga a como funciona cualquier máquina (física o virtual), todo parte
+de una imagen. Una imagen no es otra cosa que un sistema de ficheros que
+refleja el estado de un sistema en un momento concreto.</p>
+</div>
+<div class="paragraph">
+<p>En el caso de Docker, existen infinidad de imágenes disponibles para utilizar
+desde su repositorio oficial. Entre ellas se encuentran desde la imagen mínima,
+<code>scratch</code> hasta imágenes más complejas con sistemas ya instalados como <code>debian</code>,
+<code>ubuntu</code> o <code>alpine</code> o incluso con software específico o librerías y dependencias
+ya preconfiguradas como <code>node8</code>. Podríamos decir que una imagen es
+básicamente un sistema de ficheros con sus directorios y documentos empaquetados
+de una determinada manera.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Todas estas imágenes se pueden encontrar en el
+<a href="https://hub.docker.com/explore/">Repositorio oficial de Docker Hub</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="capas">Capas</h3>
+<div class="paragraph">
+<p>La <strong>diferencia</strong> entre una imagen y otra viene dada por las capas (<code>layers</code>) que la
+conforman. <strong>Cada capa es un <code>diff</code> del sistema de ficheros de la imagen anterior</strong>.
+Si partimos de una imagen base y en una capa añadimos un fichero
+<code>helloword.txt</code>, la capa que hemos creado tan sólo ocupara en memoria el tamaño
+de ese fichero.</p>
+</div>
+<div class="paragraph">
+<p>Existen varias formas de crear una nueva capa (<em>a.k.a. hacer cambios en el
+sistema de ficheros</em>):</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Haciendo un cambio controlado y programado en un script <code>Dockerfile</code>.</p>
+</li>
+<li>
+<p>Accediendo a través de la terminal al contenedor, realizando los cambios por
+línea de comandos y guardando los cambios en una nueva imagen con <code>docker commit</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Por cuaquiera de las dos vías, el resultado será el mismo: una nueva imagen que
+compartirá todas las capas de su imagen base. Ésto es interesante porque
+Docker lo aprovechará para minimizar el espacio que ocupan varias imágenes.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Cabe destacar que en un <code>Dockerfile</code>, cada <em>instrucción</em> conforma una nueva
+capa y no el resultado completo de la ejecución por lo que en el ejemplo
+mencionado suponemos que sólo se ejecuta una <em>instrucción</em> como <code>ADD . /opt/app</code>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="instancias">Instancias</h3>
+<div class="paragraph">
+<p>Si una imagen es un sistema de ficheros que refleja el estado de un sistema,
+un contenedor es una instancia "<em>en ejecución</em>" de esa imagen.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+El entrecomillado se debe a que un contenedor puede ser detenido y vuelto a
+poner en parcha, pero a efectos prácticos podemos diferenciar contenedores e
+imágenes en éstos términos.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Parece entonces que una imagen tan sólo es una plantilla para instanciar un
+contenedor, hasta que observamos la implementación interna en la
+<a href="https://docs.docker.com/storage/storagedriver/">documentación sobre persistencia</a>.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="images/volumenes-en-docker/container-layers.jpg" alt="container layers"></span></p>
+</div>
+<div class="paragraph">
+<p>En ella se puede observar cómo un contenedor no es sino una capa extra sobre una
+imagen ya existente, con una serie de metadatos y configuraciones adjuntos. Por
+esto mismo es tan sencillo realizar <code>docker commit</code>. Porque cuando ejecutamos
+dicho comando, tan sólo estamos estamos convirtiendo esa capa de
+<em>lectura/escritura</em> a <em>sólo lectura</em>.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Las capas <em>R/W</em> están almacenadas en <code>/var/lib/docker/containers</code> mientras
+que las capas <em>RO</em> están en <code>/var/lib/docker/{nombre_del_driver}</code>. Ésto se puede
+comprobar en esta <a href="https://docs.docker.com/storage/storagedriver/#copying-makes-containers-efficient"><em>demo</em> de su documentación oficial</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Cada cambio que hacemos en un contenedor en ejecución es en realidad hecho sobre
+el sistema de ficheros en el que están alojada su capa <em>R/W</em> utilizando además
+una política <em>copy-on-write</em>.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Cada <em>driver</em> ejecuta esta política de forma diferente. Para más información,
+consultar <a href="https://docs.docker.com/storage/storagedriver/#copying-makes-containers-efficient">la documentación</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Este proceso tiene un impacto en el rendimiento del sistema, ese fue uno de los
+motivos para crear los <strong>volúmenes</strong>, para casos en los que se necesita un
+<em>IO</em> intensivo y eficiente y no se necesita que formen parte del sistema de capas.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="volúmenes">Volúmenes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Como cita la <a href="https://docs.docker.com/engine/reference/commandline/commit/#extended-description">documentación sobre el comando <code>docker commit</code></a>:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>The commit operation <strong>will not include any data contained in volumes</strong> mounted inside the container.</p>
+</div>
+</blockquote>
+<div class="attribution">
+&#8212; Documentación Oficial de Docker
+</div>
+</div>
+<div class="paragraph">
+<p>Los volúmenes son introducidos en docker para emular el funcionamiento de la herramienta
+<code>mount</code> de unix. De ese modo, se crea una unidad de almacenamiento (el <code>volumen</code>)
+y se monta en la ruta especificada.</p>
+</div>
+<div class="paragraph">
+<p>Esta unidad de almacenamiento no estará sujeta al sistema de <code>layers</code> del contenedor,
+por lo que las operaciones de <em>I/O</em> serán mucho más eficientes.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+No hay que confundir volúmenes con bindings. Aunque su sintaxis sea parecida
+(<code>bind_host:bind_container</code> y <code>volume:mount_container</code>) y su comando el mismo (<code>-v</code>),
+un binding monta un directorio local en un directorio
+del contenedor mientras que el volumen es un elemento creado y controlado por Docker
+cuya hubicación en el host no es necesario conocer.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="docker-volume-manager">Docker Volume Manager</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Es un contenedor <em>Ultra Light Weight</em> diseñado para exportar e importar volúmenes docker
+en paquetes así como explorar volúmenes existentes.</p>
+</div>
+<div class="sect2">
+<h3 id="funcionalidades">Funcionalidades</h3>
+<div class="paragraph">
+<p>Las funcionalidades que ofrece éste comando son:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Exportar un volumen existente a un fichero comprimido</p>
+</li>
+<li>
+<p>Importar volumen comprimido a un volumen existente</p>
+</li>
+<li>
+<p>Copiar un volumen a otro con otro nombre</p>
+</li>
+<li>
+<p>Explorar los ficheros dentro de un volumen</p>
+</li>
+<li>
+<p>Escribir por pantalla el contenido de un fichero dentro de un volumen</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+La imagen exportada coincide con el nombre del volumen fuente al exportar
+y debe coincidir con el nombre del volumen destino al importar. La explicación
+es que si se quiere duplicar un volumen, existe el comando <code>copy</code> mientras que
+<code>export/import</code> están pensados para <em>backup/restore</em> o para migrar de máquina.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="comandos">Comandos</h3>
+<div class="sect3">
+<h4 id="comandos-nativos">Comandos nativos</h4>
+<div class="paragraph">
+<p>Primero, es necesario conocer los comandos nativos que sí soporta Docker para
+la gestión de imágenes.</p>
+</div>
+<div class="listingblock">
+<div class="title">Listado de volúmenes</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">docker volume ls</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Creación de un volumen</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">docker volume create VOLUME</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Borrado de un volumen</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">docker volume rm VOLUME</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="comandos-de-docker-volume-manager">Comandos de Docker Volume Manager</h4>
+<div class="paragraph">
+<p>El resto de funcionalidades no están soportadas y será necesario para ello
+usar la herramienta.</p>
+</div>
+<div class="listingblock">
+<div class="title">Exportar un volumen existente a un fichero comprimido</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="txt">./docker-volume export SOURCE_VOLUME</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Creará un fichero comprimido en el directorio desde donde se ejecute el comando
+(<code>pwd</code>) llamado <code>SOURCE_VOLUME.tar</code> que contendrá el volumen <code>SOURCE_VOLUME</code>
+comprimido.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Éste comando funciona aunque el volumen esté en uso.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">Importar volumen comprimido a un volumen existente</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="txt">./docker-volume import DESTINATION_VOLUME</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Tratará de leer el fichero comprimido llamado llamado
+<code>SOURCE_VOLUME.tar</code> que estará en el directorio desde donde se ejecute dicho
+comando (<code>pwd</code>) e importará su contenido en el volumen <code>SOURCE_VOLUME</code>.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Este comando funciona aunque el volumen esté en uso. El/los
+contenedor/es que estén usando ese volumen, percibirán el <code>import</code> como
+un simple cambio de los ficheros en él.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">Copiar un volumen a otro con otro nombre</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="txt">./docker-volume copy SOURCE_VOLUME DESTINATION_VOLUME</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Copiará el contenido de el volumen <code>SOURCE_VOLUME</code> al volumen <code>DESTINATION_VOLUME</code>.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Si no existe el volumen, este comando lo crea. El/los
+contenedor/es que estén usando el volumen de destino volumen, percibirán
+el <code>copy</code> como un simple cambio de los ficheros en él.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">Explorar los ficheros dentro de un volumen</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="txt">./docker-volume ls VOLUME PATH</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Muestra los ficheros y directorios en la ruta <code>PATH</code> dentro del volumen <code>VOLUME</code>.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Si bien es cierto que puede ser más cómodo hacer un <code>export</code> y abrir el fichero
+coprimido, ésta funcionalidad permite ejecutar un comando <code>ls</code> sobre cualquier
+ruta dentro del volumen.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">Escribir por pantalla el contenido de un fichero dentro de un volumen</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="txt">./docker-volume cat VOLUME PATH</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Envía a la salida estándar el resultado de la ejecución del
+comando <code>cat</code> sobre el fichero del volumen <code>PATH</code>.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Esa salida puede usarse en una <code>pipe</code> en el host encadenada con comandos como
+<code>grep</code>, <code>&gt; out.txt</code>, <code>tr</code>, <code>sed</code>, etc.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="funcionamiento-interno">Funcionamiento interno</h3>
+<div class="paragraph">
+<p>La clave del éxito de esta herramienta es el uso de la imagen <em>ultra ligera</em>
+<code>busybox</code>, que contiene un set de las herramientas más comunes de unix
+simplificadas que no requieren de un sistema operativo.</p>
+</div>
+<div class="paragraph">
+<p>Gracias a esa imagen, podemos crear un contenedor <em>ad-hoc</em> al cual le montamos
+el volumen con el que deseamos operar para luego ejecutar un comando de <code>bussybox</code>
+sobre él.</p>
+</div>
+<div class="paragraph">
+<p>Internamente, todos los comandos internos usan la estructura
+<code>CABECERA_COMÚN [VOLúMENES_EXTRA] busybox COMANDO</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title">Cabecera común a todos los comandos internos</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">docker run \ <i class="conum" data-value="1"></i><b>(1)</b>
+--rm \ <i class="conum" data-value="2"></i><b>(2)</b>
+-v $2:/vol:ro <i class="conum" data-value="3"></i><b>(3)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Comando que descarga (si no existe ya) la imagen dada y crea y ejecuta un
+contenedor de ella.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Argumento que estipula que el contenedor será borrado al finalizar su
+ejecución. Imprescindible para evitar la acumulación de contenedores usados.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Montaje del volumen llamado igual al segundo argumento (<code>$2</code>) al punto <code>/vol</code>
+en el contenedor.</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+La anotación <code>:ro</code> del contenedor define que será de sólo lectura, lo que
+garantiza que la imagen original no será modificada y mucho menos dañada.
+<strong>IMPORTANTE:</strong> El comando <code>import</code> sí requiere permisos de escritura
+sobre el volumen original por motivos evidentes, por lo que prescinde de esta
+opción igual que el comando <code>copy</code> para su volumen destino.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">export</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">        docker run --rm -v $2:/vol:ro \
+          -v $(pwd):/ext \
+          busybox \
+          tar cvf /ext/$2.tar /vol/;  <i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Hace el <code>binding</code> el directorio local del host y el directorio <code>/ext</code> del
+contenedor.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Ejecuta el comando de comprimir <code>/vol</code> en un un <code>.tar</code> y guardarlo en el  directorio <em>bindeado</em> <code>/ext</code>.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">import</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">        docker run --rm -v $2:/vol \
+          -v $(pwd):/ext \
+          busybox \
+          tar xvf /ext/$2.tar --strip 1 -C /vol;  <i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Hace el <code>binding</code> el directorio local del host y el directorio <code>/ext</code> del
+contenedor.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Ejecuta el comando de descomprimir el contenido del <code>.tar</code> en el
+directorio del volumen <code>/vol</code>.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">copy</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">        docker run --rm -v $2:/vol:ro \
+          -v $3:/newvol \
+          busybox \
+          cp -a /vol/. /newvol/;  <i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Monta el segundo volumen en el directorio <code>/newvol</code>.
+contenedor</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Ejecuta el comando de copiar todo el contenido del directorio
+del volumen <code>/vol</code> al directorio del nuevo volúmen <code>/newvol</code>.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">ls</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">        docker run --rm -v $2:/vol:ro \
+          busybox \
+          ls /vol/$3;  <i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Ejecuta el comando <code>ls</code> dentro del directorio <code>/vol</code> con una ruta definida
+en <code>$3</code>.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">cat</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">        docker run --rm -v $2:/vol:ro \
+          busybox \
+          cat /vol/$3;  <i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Ejecuta el comando <code>cat</code> dentro del directorio <code>/vol</code> con una ruta definida
+en <code>$3</code>.</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="usos-creativos-de-las-funcionalidades">Usos creativos de las funcionalidades</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A partir de las funcionalidades básicas se pueden extraer otros usos creativos
+de esta herramienta:</p>
+</div>
+<div class="paragraph">
+<div class="title">Utilizar volúmenes plantilla</div>
+<p>Aprovechando la capacidad de copiar volúmenes
+se pueden crear una serie de <em>volúmenes plantilla</em> y hacer copias de ellos.</p>
+</div>
+<div class="paragraph">
+<p><em>Por ejemplo:</em></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Tenemos una estructura de carpetas en el host local.</p>
+</li>
+<li>
+<p>Creamos un volumen nuevo con <code>docker volume create &lt;nombre_del_volumen&gt;</code>.
+(Se puede seguir algún principio de nombrado siempre que <code>docker</code> lo permita.
+  Ej: <code>t_&lt;nombre_de_la_platilla&gt;</code>)</p>
+</li>
+<li>
+<p>Comprimimos la estructura en <code>&lt;nombre_del_volumen&gt;.tar</code>. (El <code>.tar</code> ha de
+contener todo en una carpeta raíz).</p>
+</li>
+<li>
+<p>Importamos el contenido del <code>.tar</code> al volumen con
+<code>./docker-volume import &lt;nombre_del_volumen&gt;</code>.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<div class="title">Migrar de máquina contenedores con sus datos</div>
+<p>Al exportar un contenedor con <code>docker save</code> los volúmenes no son inluídos. Este
+herramienta permite hacer migraciones completas sin perder el estado de los mismos.</p>
+</div>
+<div class="paragraph">
+<p><em>Por ejemplo:</em></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Paramos el contenedor con <code>docker stop &lt;nombre_del_contenedor&gt;</code>.</p>
+</li>
+<li>
+<p>Listamos sus volúmenes con <code>docker inspect &lt;nombre_del_contenedor&gt;</code> (sección <em>"Mounts"</em>).</p>
+</li>
+<li>
+<p>Guardamos el contenedor como imagen con <code>docker commit &lt;nombre_del_contenedor&gt; &lt;nueva_tag&gt;</code>.</p>
+</li>
+<li>
+<p>Guardamos la nueva imagen con <code>docker save &lt;nueva_tag&gt; -o &lt;nombre_del_contenedor&gt;.tar</code>.</p>
+</li>
+<li>
+<p>Exportando sus volúmenes <code>./docker-volume export &lt;nombre_del_volumen&gt;</code>.</p>
+</li>
+<li>
+<p>Movemos los ficheros resultantes ( <code>contenedor.tar</code>, <code>vol1.tar</code>, <code>vol2.tar</code>, <code>&#8230;&#8203;</code> ) a la máquina destino.</p>
+</li>
+<li>
+<p>Creamos los volúmenes en la máquina destino con <code>docker volume create &lt;nombre_del_volumen&gt;</code>.</p>
+</li>
+<li>
+<p>Importamos los volúmenes en la máquina destino con <code>./docker-volume import &lt;nombre_del_volumen&gt;</code>.</p>
+</li>
+<li>
+<p>Cargamos la imágen en la máquina destino con <code>docker load -i &lt;nombre_del_contenedor&gt;.tar</code>.</p>
+</li>
+<li>
+<p>Creamos un nuevo contenedor vinculando esos volúmenes a sus puntos originales con
+<code>docker run &lt;nueva_tag&gt; -v &lt;nombre_del_volumen&gt;:&lt;punto_de_montaje&gt;</code>.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Los pasos 3. y 4. podrían resumirse en uno sólo:
+<code>docker export &lt;nombre_del_contenedor&gt;</code>. El fichero resultante sería más pequeño,
+pero habríamos perdido las capas y los metadatos de la imagen. A pesar de que
+resulta tentados ahorrarnos ese espacio, en la máquina destino, puede que muchas
+de las capas usadas por la imagen ya existieran por lo que al importarse en ella,
+el espacio que ocupará en disco será menor que con <code>export</code>. En otras palabras,
+<code>comit &amp;&amp; save</code> guarda una imagen multicapa y <code>export</code> guarda una imagen monocapa.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
+Version 1.0<br>
 Last updated 2018-04-27 08:34:36 UTC
 </div>
 </div>
