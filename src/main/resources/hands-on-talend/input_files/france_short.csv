@@ -1,0 +1,10 @@
+geonameid	name	asciiname	alternatenames	latitude	longitude	feature_class	feature_code	country_code	cc2	admin1_code	admin2_code	admin3_code	admin4_code	population	elevation	dem	timezone	modification_date
+2659086	Recon, Col de	Recon, Col de	Rapenaz  Col de,Recon  Col de	46.30352	6.82838	T	PASS	FR	CH	84	74	744	74058	0		1733	Europe/Zurich	2016-12-10
+2659815	Lucelle	Lucelle	La Lucelle Riviere,La Lucelle Rivière,Lucelle,Lutzel,Lützel	47.41667	7.5	H	STM	FR		00				0		353	Europe/Zurich	2014-08-05
+2659933	Les Cornettes de Bise	Les Cornettes de Bise	Cornettes de Bise,Les Cornettes de Bise	46.33333	6.78333	T	PK	FR	CH	84	74	744	74058	0	2432	2322	Europe/Zurich	2016-02-18
+2659943	Ruisseau le Lertzbach	Ruisseau le Lertzbach	Le Lertzbach Ruisseau,Lertzbach,Ruisseau le Lertzbach	47.58333	7.58333	H	STM	FR		00				0		245	Europe/Zurich	2012-06-05
+2659973	Le Cheval Blanc	Le Cheval Blanc	Le Cheval Blanc	46.05132	6.87178	T	MT	FR	CH	84	74	742	74290	0	2831	2807	Europe/Zurich	2016-12-10
+2660216	Jougnena	Jougnena	Jougnena,Jougnenaz,Jouguena,La Jougnena Ruisseau	46.71667	6.4	H	STM	FR	CH	00				0		787	Europe/Zurich	2014-08-05
+2661811	London	London	Allondon,L'Allondon,La London Riviere,La London Rivière,London,L’Allondon	46.16667	6.01667	H	STM	FR		00				0		427	Europe/Zurich	2014-12-03
+2842622	Saar River	Saar River	La Sarre Riviere,La Sarre Rivière,Saar,Saar River,Sarre	49.7	6.56667	H	STM	FR		00				0		134	Europe/Berlin	2014-08-05
+2844740	Rosselle	Rosselle	La Rosselle Riviere,La Rosselle Rivière,La Rosselle Ruisseau,Rosel,Rossel,Rosselle	49.24558	6.83944	H	STM	FR	DE	00				0		184	Europe/Berlin	2016-01-02

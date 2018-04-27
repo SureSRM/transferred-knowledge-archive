@@ -1,0 +1,10 @@
+geonameid	name	asciiname	alternatenames	latitude	longitude	feature_class	feature_code	country_code	cc2	admin1_code	admin2_code	admin3_code	admin4_code	population	elevation	dem	timezone	modification_date
+2509292	Arroyo de la Zurita	Arroyo de la Zurita		39.52337	-3.84836	H	STMI	ES		54	TO	45200		0		718	Europe/Madrid	2011-10-11
+2509293	Zurgena	Zurgena		37.34218	-2.03985	P	PPLA3	ES		51	AL	04103		2317		244	Europe/Madrid	2012-03-04
+2509294	Zúñiga	Zuniga	Caserio Zuniga,Caserío Zúñiga,Zuniga,Zúñiga	37.79887	-1.70456	P	PPL	ES		31	MU	30024		0		563	Europe/Madrid	2016-01-09
+2509295	Río Zumeta	Rio Zumeta		38.21784	-2.45368	H	STM	ES		54	AB	02055		0		735	Europe/Madrid	2011-10-11
+2509296	Arroyo del Zumajo del Olivar	Arroyo del Zumajo del Olivar		36.66667	-5.9	H	STMI	ES		51	CA	11020		0		25	Europe/Madrid	1993-12-23
+2509297	Zulema	Zulema	Zulema	39.23333	-1.38333	P	PPL	ES		54	AB	02007		0		688	Europe/Madrid	2012-01-19
+2509298	Río Zújar	Rio Zujar	Rio Zujar,Río Zújar	39.01019	-5.78008	H	STM	ES		00	BA	06153		0		251	Europe/Madrid	2016-03-10
+2509299	Zújar	Zujar		38.56667	-5.31667	P	PPL	ES		51	CO	14008		0		463	Europe/Madrid	2016-06-22
+2509300	Zújar	Zujar	Zujar,Zújar	37.54285	-2.84197	P	PPL	ES		51	GR	18023		2699		780	Europe/Madrid	2012-01-19
