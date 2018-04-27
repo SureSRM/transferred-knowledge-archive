@@ -57,9 +57,9 @@ sistema de ficheros_):
 
 * Haciendo un cambio controlado y programado en un script `Dockerfile`.
 * Accediendo a través de la terminal al contenedor, realizando los cambios por
-línea de comandos y guardando los cambios en una ueva imagen con `docker commit`.
+línea de comandos y guardando los cambios en una nueva imagen con `docker commit`.
 
-Por cuaquiera de las dos vías, el resultado será el mismo: una nueva imágen que
+Por cuaquiera de las dos vías, el resultado será el mismo: una nueva imagen que
 compartirá todas las capas de su imagen base. Ésto es interesante porque
 {dok} lo aprovechará para minimizar el espacio que ocupan varias imágenes.
 
@@ -86,7 +86,7 @@ En ella se puede observar cómo un contenedor no es sino una capa extra sobre un
 imagen ya existente, con una serie de metadatos y configuraciones adjuntos. Por
 esto mismo es tan sencillo realizar `docker commit`. Porque cuando ejecutamos
 dicho comando, tan sólo estamos estamos convirtiendo esa capa de
-_lectura/escritura_ a _sólo lectura_ magen.
+_lectura/escritura_ a _sólo lectura_.
 
 TIP: Las capas _R/W_ están almacenadas en `/var/lib/docker/containers` mientras
 que las capas _RO_ están en `/var/lib/docker/{nombre_del_driver}`. Ésto se puede
@@ -111,6 +111,18 @@ ____
 The commit operation *will not include any data contained in volumes* mounted inside the container.
 ____
 
+Los volúmenes son introducidos en docker para emular el funcionamiento de la herramienta
+`mount` de unix. De ese modo, se crea una unidad de almacenamiento (el `volumen`)
+y se monta en la ruta especificada.
+
+Esta unidad de almacenamiento no estará sujeta al sistema de `layers` del contenedor,
+por lo que las operaciones de _I/O_ serán mucho más eficientes.
+
+WARNING: No hay que confundir volúmenes con bindings. Aunque su sintaxis sea parecida
+(`bind_host:bind_container` y `volume:mount_container`) y su comando el mismo (`-v`),
+un binding monta un directorio local en un directorio
+del contenedor mientras que el volumen es un elemento creado y controlado por Docker
+cuya hubicación en el host no es necesario conocer.
 
 == Docker Volume Manager
 
