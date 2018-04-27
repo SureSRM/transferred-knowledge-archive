@@ -1,0 +1,66 @@
+#!/bin/bash
+function usage() {
+  echo "Usage:
+  export:        $0 import SOURCE_VOLUME
+  import:        $0 export DESTINATION_VOLUME
+  copy:          $0 copy SOURCE_VOLUME DESTINATION_VOLUME
+  ls:            $0 ls VOLUME PATH
+  cat:           $0 cat VOLUME PATH"
+}
+
+if [ $# -lt 2 ] ; then
+  usage;
+  exit 1;
+fi;
+
+if docker volume inspect $2 &> /dev/null ; then
+  case $1 in
+    export)
+        echo "Exporting volume [$2] to $2.tar";
+        # tag::export[]
+        docker run --rm -v $2:/vol:ro \
+          -v $(pwd):/ext \
+          busybox \
+          tar cvf /ext/$2.tar /vol/;  #<1>
+        # end::export[]
+        exit 0;;
+    import)
+        echo "Importing volume [$2] from $2.tar";
+        # tag::import[]
+        docker run --rm -v $2:/vol \
+          -v $(pwd):/ext \
+          busybox \
+          tar xvf /ext/$2.tar --strip 1 -C /vol;  #<1>
+        # end::import[]
+        exit 0;;
+    copy)
+        echo "Copying volume [$2] to [$3]";
+        # tag::copy[]
+        docker run --rm -v $2:/vol:ro \
+          -v $3:/newvol \
+          busybox \
+          cp -a /vol/. /newvol/;  #<1>
+        # end::copy[]
+        exit 0;;
+    ls)
+        # tag::ls[]
+        docker run --rm -v $2:/vol:ro \
+          busybox \
+          ls /vol/$3;  #<1>
+        # end::ls[]
+        exit 0;;
+    cat)
+        # tag::cat[]
+        docker run --rm -v $2:/vol:ro \
+          busybox \
+          cat /vol/$3;  #<1>
+        # end::cat[]
+        exit 0;;
+    *)
+        usage;
+        exit 1;;
+  esac
+else
+  echo "Named volume [$2] does not exist."
+  exit 1;
+fi;
