@@ -1,0 +1,40 @@
+:project_id: hands-on-talend
+// Configuración de rutas
+// :project_id: <Put a project ID if it's not set above>
+:resources_dir: {resourcesdir}/{project_id}
+:include_dir: {includedir}/{projermct_id}
+
+// Variables del documento
+:tal: Talend
+:tos: {tal} Open Studio
+:talv: {tos} 7.0.1
+:dok: Docker
+:dokv: {dok} 17.12.1-ce
+
+= Título
+Author <mail@do.main>
+v1.0, {docdate}
+:experimental:
+{tal} es una herramienta gráfica para definir flujos de ETL
+
+== Pre-requisitos
+* {tosv}
+* {dokv}
+
+== Introducción
+
+== Configuración de metadatos
+
+=== Conexiones
+
+=== Schemas
+
+== Creación del primer flujo
+
+=== Tipos de conexiones
+
+==== Main
+
+==== Iterate
+
+Uso de variables globales expuestas
